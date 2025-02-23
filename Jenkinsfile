@@ -6,6 +6,11 @@ pipeline {
                 sh 'mvn clean compile'
             }
         }
+         stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+         }
          stage('Sonar Analysis') {
                     steps {
                         withSonarQubeEnv('sq1') {
