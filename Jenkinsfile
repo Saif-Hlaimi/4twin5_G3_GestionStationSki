@@ -16,11 +16,11 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                sh 'mvn clean compile '
-            }
-        }
+      stage('Build') {
+          steps {
+              sh 'mvn clean compile -DargLine="--add-opens java.base/java.lang=ALL-UNNAMED"'
+          }
+      }
 
         stage('Test') {
             steps {
