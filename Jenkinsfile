@@ -39,7 +39,8 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    docker.build("gestion-station-ski:latest")
+                    // Build the Docker image
+                    docker.build("gestion-station-ski:latest", ".")
                 }
             }
         }
@@ -47,9 +48,8 @@ pipeline {
         stage('Docker Deploy') {
             steps {
                 script {
-                    docker.withRegistry('', 'docker-hub-credentials') {
-                        docker.image('gestion-station-ski:latest').run('-d -p 9000:9000')
-                    }
+                    // Run the Docker container
+                    docker.image("gestion-station-ski:latest").run("-d -p 9000:9000")
                 }
             }
         }
