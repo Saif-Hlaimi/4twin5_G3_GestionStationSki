@@ -1,10 +1,10 @@
 pipeline {
     agent any
     environment {
-        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
-
+        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
+        MAVEN_OPTS = "--add-opens java.base/java.lang=ALL-UNNAMED -Djdk.module.illegalAccess=permit"
         M2_HOME = "/usr/share/maven"
-        PATH = "$M2_HOME/bin:$PATH"
+        PATH = "${M2_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
     }
 
     stages {
@@ -16,45 +16,55 @@ pipeline {
             }
         }
 
-      stage('Build') {
-          steps {
-              sh 'mvn clean compile -DargLine="--add-opens java.base/java.lang=ALL-UNNAMED"'
-          }
-      }
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
 
         stage('Test') {
             steps {
-                sh 'mvn test -Dspring.profiles.active=test'  // Teste tous les tests (incluant CourseTest)
+                sh 'mvn test -Dspring.profiles.active=test -DargLine="--add-opens java.base/java.lang=ALL-UNNAMED"'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sq1') {
-                    sh 'mvn sonar:sonar'
+                    sh 'mvn sonar:sonar -Dsonar.java.jdkHome=${JAVA_HOME}'
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t gestion-station-ski:latest .'
+                script {
+                    docker.build("gestion-station-ski:latest")
+                }
             }
         }
 
         stage('Docker Deploy') {
             steps {
-                sh 'docker run -d -p 9000:9000 gestion-station-ski:latest'  // Déploie sur le port 9000 (externe) vers 8089 (interne)
+                script {
+                    docker.withRegistry('', 'docker-hub-credentials') {
+                        docker.image('gestion-station-ski:latest').run('-d -p 9000:9000')
+                    }
+                }
             }
         }
     }
 
     post {
         always {
-            junit '**/target/surefire-reports/*.xml'  // Archive les rapports JUnit
+            junit '**/target/surefire-reports/**/*.xml'
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline exécutée avec succès! ✅'
         }
         failure {
-            echo 'Pipeline failed. Check logs for details.'
+            echo 'Échec de la pipeline! ❌'
         }
     }
 }
