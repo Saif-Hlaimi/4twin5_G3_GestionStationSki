@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk
+FROM openjdk:17-jdk
 COPY . /app
 WORKDIR /app
 RUN mvn clean install
