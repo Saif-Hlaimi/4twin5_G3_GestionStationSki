@@ -38,26 +38,19 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                script {
-                    // Construction de l'image Docker via le Dockerfile
-                    docker.build("gestion-station-ski:latest", ".")
-                }
+                sh 'sudo docker build -t gestion-station-ski:latest .'
             }
         }
 
         stage('Docker Deploy') {
             steps {
-                script {
-                    // Lancement du container sur le port 9000
-                    docker.image("gestion-station-ski:latest").run("-d -p 9000:9000")
-                }
+                sh 'sudo docker run -d -p 9000:9000 gestion-station-ski:latest'
             }
         }
     }
 
     post {
         always {
-            // Permet de ne pas échouer si aucun rapport de test n'est trouvé
             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/**/*.xml'
             cleanWs()
         }
