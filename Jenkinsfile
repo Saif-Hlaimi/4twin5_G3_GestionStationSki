@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'SaifHlaimi-4TWIN5-G3',
-                    url: 'https://github.com/Saif-Hlaimi/4twin5-G3-GestionStationSki.git',
+                    url: 'https://github.com/Saif-Hlaimi/4twin5_G3_GestionStationSki.git',
                     credentialsId: 'jenkins-key'
             }
         }
