@@ -17,13 +17,13 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'mvn clean compile -Xmx1024m -Xms512m'  // Compilation avec mémoire ajustée
+                sh 'mvn clean compile '
             }
         }
 
         stage('Test') {
             steps {
-                sh 'mvn test -Dspring.profiles.active=test -Xmx1024m -Xms512m'  // Teste tous les tests (incluant CourseTest)
+                sh 'mvn test -Dspring.profiles.active=test'  // Teste tous les tests (incluant CourseTest)
             }
         }
 
