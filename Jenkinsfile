@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        JAVA_HOME = "/usr/lib/jvm/java-8-openjdk-amd64/"  // Utilise Java 1.8
+        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"  // Utilise Java 1.8
         M2_HOME = "/usr/share/maven"
         PATH = "$M2_HOME/bin:$PATH"
     }
