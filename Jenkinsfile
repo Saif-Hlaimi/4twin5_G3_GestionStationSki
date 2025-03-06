@@ -6,17 +6,22 @@ pipeline {
                 sh 'mvn clean compile'
             }
         }
-         stage('Test') {
+        stage('Test') {
             steps {
                 sh 'mvn test -Dspring.profiles.active=test'
             }
-         }
-         stage('Sonar Analysis') {
-                    steps {
-                        withSonarQubeEnv('sq1') {
-                            sh 'mvn sonar:sonar'
-                        }
-                    }
+        }
+        stage('Sonar Analysis') {
+            steps {
+                withSonarQubeEnv('sq1') {
+                    sh 'mvn sonar:sonar'
                 }
+            }
+        }
+        stage('Nexus') {
+            steps {
+                sh 'mvn clean deploy'
+            }
+        }
     }
 }
