@@ -18,7 +18,7 @@ import java.util.*;
 @ExtendWith(SpringExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
-public class SkierServicesImplTest {
+ class SkierServicesImplTest {
     @Autowired
     private SkierServicesImpl skierServices;
 
@@ -28,7 +28,7 @@ public class SkierServicesImplTest {
     @Test
     @Order(1)
     @Transactional
-    public void testRetrieveAllSkiers() {
+     void testRetrieveAllSkiers() {
         // Création de données de test
         Skier skier1 = new Skier();
         skier1.setFirstName("John");
@@ -62,7 +62,7 @@ public class SkierServicesImplTest {
     @Test
     @Order(2)
     @Transactional
-    public void testAddSkier() {
+     void testAddSkier() {
         // Création d'un skieur avec un abonnement annuel
         Skier skier = new Skier();
         skier.setFirstName("Alice");
@@ -98,7 +98,7 @@ public class SkierServicesImplTest {
     @Test
     @Order(5)
     @Transactional
-    public void testRetrieveSkier() {
+     void testRetrieveSkier() {
         // Création d'un skieur pour le test
         Skier skier = new Skier();
         skier.setFirstName("Test");
@@ -127,7 +127,7 @@ public class SkierServicesImplTest {
     @Test
     @Order(5)
     @Transactional
-    public void testRetrieveSkierById() {
+     void testRetrieveSkierById() {
         // Création d'un skieur pour le test
         Skier skier = new Skier();
         skier.setFirstName("TestSkier");
