@@ -33,9 +33,9 @@ pipeline {
             }
         }
 
-        stage('Nexus') {
+       stage('Nexus') {
 			steps {
-				sh 'mvn clean deploy -Dmaven.test.skip=true'
+				sh 'mvn deploy -DskipTests'
             }
         }
     }
