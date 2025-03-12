@@ -34,23 +34,21 @@ pipeline {
                     sh 'mvn sonar:sonar -Dsonar.java.jdkHome=${JAVA_HOME}'
                 }
             }
+        } // <-- Correction ici (supprimer l'accolade supplémentaire)
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t gestion-station-ski:latest .' // Retirer sudo
+            }
         }
 
-stage('Docker Build') {
-    steps {
-        script {
-            sh 'docker build -t gestion-station-ski:latest .'
+        stage('Docker Deploy') {
+            steps {
+                sh 'docker run -d -p 9000:9000 gestion-station-ski:latest' // Retirer sudo
+            }
         }
-    }
-}
+    } // <-- Ceci ferme correctement le bloc stages principal
 
-stage('Docker Deploy') {
-    steps {
-        script {
-            sh 'docker run -d -p 9000:9000 gestion-station-ski:latest'
-        }
-    }
-}
     post {
         always {
             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/**/*.xml'
