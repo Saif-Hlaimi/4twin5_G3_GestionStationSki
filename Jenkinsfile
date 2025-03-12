@@ -1,6 +1,6 @@
 pipeline {
 	agent any
-  environment {
+    environment {
 		JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
         M2_HOME = "/usr/share/maven"  // Mise à jour du chemin de Maven
         PATH = "$M2_HOME/bin:$PATH"
@@ -27,20 +27,16 @@ pipeline {
             }
         }
 
-
-        stage(' test Projet') {
+        stage('Test Projet') {
 			steps {
-				sh 'mvn -Dtest=RegistrationServicesImplTest clean test '
-             }
-        }
-
-
-
-          stage('Nexus') {
-			steps {
-				sh 'mvn deploy -DskipTests'
+				sh 'mvn -Dtest=RegistrationServicesImplTest clean test'
             }
         }
 
+        stage('Nexus') {
+			steps {
+				sh 'mvn clean deploy -Dmaven.test.skip=true'
+            }
+        }
     }
 }
