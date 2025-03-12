@@ -36,19 +36,21 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                sh 'sudo docker build -t gestion-station-ski:latest .'
-            }
-        }
-
-        stage('Docker Deploy') {
-            steps {
-                sh 'sudo docker run -d -p 9000:9000 gestion-station-ski:latest'
-            }
+stage('Docker Build') {
+    steps {
+        script {
+            sh 'docker build -t gestion-station-ski:latest .'
         }
     }
+}
 
+stage('Docker Deploy') {
+    steps {
+        script {
+            sh 'docker run -d -p 9000:9000 gestion-station-ski:latest'
+        }
+    }
+}
     post {
         always {
             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/**/*.xml'
