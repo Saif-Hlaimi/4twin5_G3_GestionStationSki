@@ -34,24 +34,34 @@ pipeline {
                     sh 'mvn sonar:sonar -Dsonar.java.jdkHome=${JAVA_HOME}'
                 }
             }
-        } // <-- Correction ici (supprimer l'accolade supplémentaire)
+        }
+
+        stage('Package JAR') {
+            steps {
+                sh 'mvn package -DskipTests'  // Construire le JAR sans relancer les tests
+            }
+        }
 
         stage('Docker Build') {
             steps {
-                sh  'sudo docker build -t gestion-station-ski:latest .' // Retirer sudo
+                sh 'docker build -t gestion-station-ski:latest .'
             }
         }
 
         stage('Docker Deploy') {
             steps {
-                sh 'sudo docker run -d -p 9000:9000 gestion-station-ski:latest' // Retirer sudo
+                // Arrêter et supprimer tout conteneur existant avec le même nom
+                sh '''
+                docker rm -f gestion-station-ski || true
+                docker run -d -p 8089:8089 --name gestion-station-ski gestion-station-ski:latest
+                '''
             }
         }
-    } // <-- Ceci ferme correctement le bloc stages principal
+    }
 
     post {
         always {
-            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/**/*.xml'
+            junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
             cleanWs()
         }
         success {
