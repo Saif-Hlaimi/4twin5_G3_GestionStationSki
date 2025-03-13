@@ -36,15 +36,24 @@ pipeline {
             }
         } // <-- Correction ici (supprimer l'accolade supplémentaire)
 
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t gestion-station-ski:latest .' // Retirer sudo
-            }
-        }
+      stage('Docker Build') {
+          steps {
+              script {
+                  // Ajoutez un timeout pour les builds longs
+                  timeout(time: 15, unit: 'MINUTES') {
+                      sh 'docker build -t gestion-station-ski:latest .'
+                  }
+              }
+          }
+      }
 
         stage('Docker Deploy') {
             steps {
-                sh 'docker run -d -p 9000:9000 gestion-station-ski:latest' // Retirer sudo
+                script {
+                    // Force la suppression des anciens conteneurs
+                    sh 'docker rm -f gestion-station || true'
+                    sh 'docker run -d --name gestion-station -p 9000:9000 gestion-station-ski:latest'
+                }
             }
         }
     } // <-- Ceci ferme correctement le bloc stages principal
