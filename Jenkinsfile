@@ -5,6 +5,7 @@ pipeline {
         MAVEN_OPTS = "--add-opens java.base/java.lang=ALL-UNNAMED -Djdk.module.illegalAccess=permit"
         M2_HOME = "/usr/share/maven"
         PATH = "${M2_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
+        DOCKER_IMAGE = "gestion-station-ski:latest"
     }
 
     stages {
@@ -34,20 +35,24 @@ pipeline {
                     sh 'mvn sonar:sonar -Dsonar.java.jdkHome=${JAVA_HOME}'
                 }
             }
-        } // <-- Correction ici (supprimer l'accolade supplémentaire)
+        }
 
         stage('Docker Build') {
             steps {
-                sh  'sudo docker build -t gestion-station-ski:latest .' // Retirer sudo
+                sh "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
         stage('Docker Deploy') {
             steps {
-                sh 'sudo docker run -d -p 9000:9000 gestion-station-ski:latest' // Retirer sudo
+                sh '''
+                    docker stop gestion-station-ski || true
+                    docker rm gestion-station-ski || true
+                    docker run -d --name gestion-station-ski -p 9000:9000 ${DOCKER_IMAGE}
+                '''
             }
         }
-    } // <-- Ceci ferme correctement le bloc stages principal
+    }
 
     post {
         always {
