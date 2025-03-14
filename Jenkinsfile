@@ -4,6 +4,8 @@ pipeline {
 		JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
         M2_HOME = "/usr/share/maven"  // Mise à jour du chemin de Maven
         PATH = "$M2_HOME/bin:$PATH"
+        DOCKER_IMAGE = "gestion-station-ski:latest"
+
     }
 
     stages {
@@ -37,5 +39,13 @@ pipeline {
 			steps {
 				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
         }
+
+        
+       stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKER_IMAGE} ."
+            }
+        }
+
     }
 }
