@@ -33,14 +33,10 @@ pipeline {
 				sh 'mvn -Dtest=RegistrationServicesImplTest clean test'
             }
         }
-
-        stage('Sonar Analysis') {
-                          steps {
-                              withSonarQubeEnv('sq1') {
-                                  sh 'mvn sonar:sonar'
-                              }
-                          }
-                      }
+         stage('Nexus') {
+			steps {
+				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
+        }
 
 
 
