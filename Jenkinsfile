@@ -42,9 +42,10 @@ pipeline {
           stage('Deploy avec Docker Compose') {
                     steps {
                         script {
-                            sh 'docker pull $DOCKER_IMAGE'
-                            sh 'docker compose down || true'
-                            sh 'docker compose up -d'
+                              sh 'which docker || echo "Docker non disponible"'
+         		     sh 'docker pull $DOCKER_IMAGE'
+                	    sh 'docker compose down || true'
+       			     sh 'docker compose up -d'
                         }
                     }
                 }
