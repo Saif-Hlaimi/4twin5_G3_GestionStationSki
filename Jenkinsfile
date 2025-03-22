@@ -4,6 +4,8 @@ pipeline {
 		JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
         M2_HOME = "/usr/share/maven"  // Mise à jour du chemin de Maven
         PATH = "$M2_HOME/bin:$PATH"
+        DOCKER_IMAGE = 'ferielyahyaoui/gestion-station-ski:1.0.0'
+
 
     }
 
@@ -37,6 +39,24 @@ pipeline {
 			steps {
 				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
         }
+          stage('Deploy avec Docker Compose') {
+                    steps {
+                        script {
+                            sh 'docker pull $DOCKER_IMAGE'
+                            sh 'docker compose down || true'
+                            sh 'docker compose up -d'
+                        }
+                    }
+                }
+
+          stage('Vérification des conteneurs') {
+             steps {
+                script {
+                  sh 'docker ps'
+                       }
+                       }
+          }
+
 
 
 
