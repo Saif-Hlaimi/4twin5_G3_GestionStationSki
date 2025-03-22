@@ -44,8 +44,8 @@ pipeline {
                         script {
                               sh 'which docker || echo "Docker non disponible"'
          		     sh 'docker pull $DOCKER_IMAGE'
-                	    sh 'docker compose down || true'
-       			     sh 'docker compose up -d'
+                	    sh 'docker-compose down || true'
+       			     sh 'docker-compose up -d'
                         }
                     }
                 }
