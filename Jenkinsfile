@@ -23,12 +23,19 @@ pipeline {
                 sh 'mvn clean deploy -Dmaven.test.skip=true'
             }
         }
-         stage('Build Docker Image') {
-                    steps {
-                        script {
-                            docker.build("walidkhrouf/gestion-station-ski:${env.BUILD_ID}")
-                        }
-                    }
-                    }
+        stage('Docker Build') {
+            steps {
+                script {
+                    def imageName = "skier-app"
+                    def imageTag = "latest"
+
+                    // Ensure Dockerfile uses eclipse-temurin:11-jdk-alpine
+                    sh "sed -i 's|openjdk:11-jdk-alpine|eclipse-temurin:11-jdk-alpine|g' Dockerfile"
+
+                    // Build with host networking
+                    sh "docker build --network=host -t ${imageName}:${imageTag} ."
+                }
+            }
+        }
     }
 }
