@@ -36,7 +36,7 @@ pipeline {
                           sh 'docker build --network=host -t skier-app:latest .'
 
                           // Tag the image for DockerHub
-                          sh 'docker tag skier-app:latest mouradhassini/skier-app:1.0.0'
+                          sh 'docker tag skier-app:latest walidkhrouf/skier-app:1.0.0'
                       }
                   }
               }
@@ -48,7 +48,7 @@ pipeline {
                                                          usernameVariable: 'DOCKER_HUB_USER',
                                                          passwordVariable: 'DOCKER_HUB_PWD')]) {
                               sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
-                              sh 'docker push mouradhassini/skier-app:1.0.0'
+                              sh 'docker push walidkhrouf/skier-app:1.0.0'
                           }
                       }
                   }
