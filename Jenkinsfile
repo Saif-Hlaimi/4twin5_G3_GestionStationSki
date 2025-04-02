@@ -29,5 +29,6 @@ pipeline {
                             docker.build("walidkhrouf/gestion-station-ski:${env.BUILD_ID}")
                         }
                     }
+                    }
     }
 }
