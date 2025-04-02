@@ -23,19 +23,19 @@ pipeline {
                 sh 'mvn clean deploy -Dmaven.test.skip=true'
             }
         }
-        stage('Docker Build') {
-            steps {
-                script {
-                    def imageName = "skier-app"
-                    def imageTag = "latest"
+       stage('Docker Build') {
+                  steps {
+                      script {
+                          def imageName = "skier-app"
+                          def imageTag = "latest"
 
-                    // Ensure Dockerfile uses eclipse-temurin:11-jdk-alpine
-                    sh "sed -i 's|openjdk:11-jdk-alpine|eclipse-temurin:11-jdk-alpine|g' Dockerfile"
+                          // Ensure Dockerfile uses eclipse-temurin:11-jdk-alpine
+                          sh "sed -i 's|openjdk:11-jdk-alpine|eclipse-temurin:11-jdk-alpine|g' Dockerfile"
 
-                    // Build with host networking
-                    sh "docker build --network=host -t ${imageName}:${imageTag} ."
-                }
-            }
-        }
+                          // Build with host networking
+                          sh "docker build --network=host -t ${imageName}:${imageTag} ."
+                      }
+                  }
+              }
     }
 }
