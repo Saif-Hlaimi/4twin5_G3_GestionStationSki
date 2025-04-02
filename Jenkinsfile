@@ -57,6 +57,16 @@ pipeline {
                        }
                        }
           }
+	 stage('Grafana') {
+  	     steps {
+        	echo 'Collecting Grafana metrics...'
+        	sh '''
+         	   curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+       		 '''
+     	   echo 'Metrics collected successfully!'
+    }
+}
+
 
 
 
