@@ -57,14 +57,23 @@ pipeline {
                        }
                        }
           }
-	 stage('Grafana') {
-  	     steps {
-        	echo 'Collecting Grafana metrics...'
-        	sh '''
-         	   curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
-       		 '''
-     	   echo 'Metrics collected successfully!'
+	stage('Grafana') {
+  	  steps {
+     	   script {
+            echo "Vérification de l'état de Grafana depuis Jenkins..."
+            def response = sh(script: """
+                curl -s -o /dev/null -w "%{http_code}" http://grafana:3000
+            """, returnStdout: true).trim()
+
+            if (response == '200') {
+                echo "Grafana est opérationnel depuis Jenkins."
+            } else {
+                error "Grafana n'est pas accessible depuis Jenkins. Code HTTP: ${response}"
+            }
+        }
     }
+}
+
 }
 
 
