@@ -23,5 +23,12 @@ pipeline {
                 sh 'mvn clean deploy -Dmaven.test.skip=true'
             }
         }
+         stage('Build Docker Image') {
+                    steps {
+                        script {
+                            docker.build("walidkhrouf/gestion-station-ski:${env.BUILD_ID}")
+                        }
+                    }
+                }
     }
 }
