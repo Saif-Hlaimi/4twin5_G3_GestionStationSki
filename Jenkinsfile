@@ -59,23 +59,28 @@ pipeline {
                     // Clean up any existing containers
                     sh 'docker compose down -v || true'
 
-                    // Start services with longer timeout
-                    sh 'docker compose up -d --wait --timeout 600'  // Increased to 10 minutes
+                    // Start services with logging
+                    sh 'docker compose up -d'
 
-                    // Enhanced health check with proper curl command
+                    // Enhanced health check with proper curl command and logging
                     sh '''
-                        echo "Waiting for application to start..."
-                        for i in {1..60}; do  # Increased to 60 attempts (10 minutes)
-                            if curl -s -f http://localhost:8089/api/actuator/health | grep -q 'UP'; then
-                                echo "Application is up!"
+                        echo "Waiting for services to start..."
+                        echo "Checking MySQL..."
+                        docker compose logs mysqldb --tail=50
+
+                        echo "Checking application..."
+                        for i in {1..30}; do
+                            if docker compose ps | grep app-skier | grep -q '(healthy)'; then
+                                echo "Application is healthy!"
                                 exit 0
                             fi
+                            echo "Waiting... attempt \$i/30"
+                            docker compose logs app-skier --tail=20
                             sleep 10
-                            echo "Waiting... attempt \$i/60"
-                            docker compose logs app-skier --tail=20  # Show recent logs
                         done
-                        echo "Application failed to start after 10 minutes"
-                        docker compose logs app-skier  # Show full logs on failure
+
+                        echo "Application failed to become healthy"
+                        docker compose logs app-skier
                         exit 1
                     '''
                 }
