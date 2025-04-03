@@ -53,31 +53,32 @@ pipeline {
                       }
                   }
               }
-            stage('Docker Compose Deploy') {
-                       steps {
-                           script {
-                               // Stop any existing containers
-                               sh 'docker compose down || true'
+          stage('Docker Compose Deploy') {
+              steps {
+                  script {
+                      // Clean up any existing containers
+                      sh 'docker compose down -v || true'
 
-                               // Start new containers
-                               sh 'docker compose up -d'
+                      // Start services with longer timeout
+                      sh 'docker compose up -d --wait --timeout 300'
 
-                               // Verify application is running
-                               sh '''
-                                   echo "Waiting for application to start..."
-                                   for i in {1..10}; do
-                                       if curl -s http://localhost:8089/api/actuator/health | grep -q 'UP'; then
-                                           echo "Application is up!"
-                                           exit 0
-                                       fi
-                                       sleep 10
-                                       echo "Waiting... attempt $i/10"
-                                   done
-                                   echo "Application failed to start"
-                                   exit 1
-                               '''
-                           }
-                       }
-                   }
+                      // Enhanced health check with proper curl command
+                      sh '''
+                          echo "Waiting for application to start..."
+                          for i in {1..30}; do
+                              if curl -s -f http://localhost:8089/api/actuator/health | grep -q 'UP'; then
+                                  echo "Application is up!"
+                                  exit 0
+                              fi
+                              sleep 10
+                              echo "Waiting... attempt \$i/30"
+                          done
+                          echo "Application failed to start after 5 minutes"
+                          docker compose logs app-skier
+                          exit 1
+                      '''
+                  }
+              }
+          }
     }
 }
