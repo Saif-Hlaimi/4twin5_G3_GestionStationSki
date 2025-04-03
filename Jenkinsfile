@@ -57,10 +57,10 @@ pipeline {
                        steps {
                            script {
                                // Stop any existing containers
-                               sh 'docker-compose down || true'
+                               sh 'docker compose down || true'
 
                                // Start new containers
-                               sh 'docker-compose up -d'
+                               sh 'docker compose up -d'
 
                                // Verify application is running
                                sh '''
