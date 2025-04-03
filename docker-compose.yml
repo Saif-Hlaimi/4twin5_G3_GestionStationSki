@@ -5,7 +5,7 @@ services:
     image: mysql:5.7
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword  # Changed from empty to secure password
+      - MYSQL_ROOT_PASSWORD=rootpassword
       - MYSQL_DATABASE=stationSki
     ports:
       - "3306:3306"
@@ -32,24 +32,26 @@ services:
       - "8089:8089"
     environment:
       SPRING_APPLICATION_JSON: '{
-        "spring.datasource.url": "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true&autoReconnect=true&failOverReadOnly=false&maxReconnects=10",
+        "spring.datasource.url": "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&connectTimeout=30000",
         "spring.datasource.username": "root",
         "spring.datasource.password": "rootpassword",
-        "spring.datasource.hikari.connection-timeout": 30000,
+        "spring.datasource.hikari.connection-timeout": 60000,
+        "spring.datasource.hikari.maximum-pool-size": 5,
         "spring.jpa.hibernate.ddl-auto": "update",
         "server.servlet.context-path": "/api",
         "spring.mvc.format.date": "yyyy-MM-dd",
-        "management.endpoint.health.show-details": "always"
+        "management.endpoint.health.show-details": "always",
+        "spring.jpa.properties.hibernate.dialect": "org.hibernate.dialect.MySQL5InnoDBDialect"
       }'
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8089/api/actuator/health"]
       interval: 10s
-      timeout: 5s
-      retries: 10
+      timeout: 10s
+      retries: 15
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 1024M  # Increased memory
           cpus: '1'
     stdin_open: true
     tty: true
