@@ -5,3 +5,5 @@ RUN wget -O /gestion-station-ski-1.0.jar "$NEXUS_URL"
 
 
 ENTRYPOINT ["java","-jar","/gestion-station-ski-1.0.jar"]
+
+
