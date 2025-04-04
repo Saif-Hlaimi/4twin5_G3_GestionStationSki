@@ -1,6 +1,6 @@
 pipeline {
     agent any
-  environment {
+    environment {
         JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
         M2_HOME = "/usr/share/maven"
         PATH = "$M2_HOME/bin:$PATH"
@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Hello Test') {
             steps {
-                echo ' hello elaa '
+                echo 'hello elaa'
             }
         }
 
@@ -23,25 +23,40 @@ pipeline {
 
         stage('Clean compile') {
             steps {
-                sh 'mvn clean compile'
+                script {
+                    try {
+                        sh 'mvn clean compile'
+                    } catch (Exception e) {
+                        error "Maven clean compile failed: ${e.getMessage()}"
+                    }
+                }
             }
         }
 
-
-        stage(' test Projet') {
+        stage('Test Projet') {
             steps {
-                 sh 'mvn -Dtest=SubscriptionServicesImplTest clean test '
-             }
+                script {
+                    try {
+                        sh 'mvn -Dtest=SubscriptionServicesImplTest clean test'
+                    } catch (Exception e) {
+                        error "Test execution failed: ${e.getMessage()}"
+                    }
+                }
+            }
         }
 
-          stage('Sonar Analysis') {
-                    steps {
+        stage('Sonar Analysis') {
+            steps {
+                script {
+                    try {
                         withSonarQubeEnv('sq1') {
                             sh 'mvn sonar:sonar'
                         }
+                    } catch (Exception e) {
+                        error "SonarQube analysis failed: ${e.getMessage()}"
                     }
                 }
-
-
+            }
+        }
     }
 }
