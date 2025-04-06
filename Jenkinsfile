@@ -26,16 +26,9 @@ pipeline {
         stage('Docker Build') {
                   steps {
                       script {
-                          // Verify JAR file exists
                           sh 'ls -la target/*.jar'
-
-                          // Update Dockerfile base image
                           sh "sed -i 's|openjdk:11-jdk-alpine|eclipse-temurin:11-jdk-alpine|g' Dockerfile"
-
-                          // Build Docker image
                           sh 'docker build --network=host -t skier-app:latest .'
-
-                          // Tag the image for DockerHub
                           sh 'docker tag skier-app:latest walidkhrouf/skier-app:1.0.0'
                       }
                   }
@@ -43,7 +36,6 @@ pipeline {
               stage('Push to DockerHub') {
                   steps {
                       script {
-                          // Use Jenkins credentials to login to DockerHub
                           withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
                                                          usernameVariable: 'DOCKER_HUB_USER',
                                                          passwordVariable: 'DOCKER_HUB_PWD')]) {
@@ -53,31 +45,51 @@ pipeline {
                       }
                   }
               }
-            stage('Docker Compose Deploy') {
-                       steps {
-                           script {
-                               // Stop any existing containers
-                               sh 'docker compose down || true'
+           stage('Deploy') {
+               steps {
+                   script {
+                       sh '''
+                           docker stop walidkhrouf-app timesheet-mysql || true
+                           docker rm walidkhrouf-app timesheet-mysql || true
+                           docker network create timesheet-net || true
 
-                               // Start new containers
-                               sh 'docker compose up -d'
+                           docker run -d --name timesheet-mysql \\
+                               --network timesheet-net \\
+                               -e MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \\  // À définir comme secret
+                               -e MYSQL_DATABASE=stationSki \\
+                               -p 3306:3306 \\
+                               -v mysql_data:/var/lib/mysql \\
+                               mysql:5.7
 
-                               // Verify application is running
-                               sh '''
-                                   echo "Waiting for application to start..."
-                                   for i in {1..10}; do
-                                       if curl -s http://localhost:8089/api/actuator/health | grep -q 'UP'; then
-                                           echo "Application is up!"
-                                           exit 0
-                                       fi
-                                       sleep 10
-                                       echo "Waiting... attempt $i/10"
-                                   done
-                                   echo "Application failed to start"
-                                   exit 1
-                               '''
-                           }
-                       }
+                           timeout 300s bash -c 'while [[ "$(docker inspect -f '{{.State.Health.Status}}' timesheet-mysql)" != "healthy" ]]; do sleep 5; echo "Waiting for MySQL..."; done'
+
+                           docker run -d --name walidkhrouf-app \\
+                               --network timesheet-net \\
+                               -p 8089:8089 \\
+                               -e SPRING_DATASOURCE_URL=jdbc:mysql://timesheet-mysql:3306/stationSki \\
+                               -e SPRING_DATASOURCE_USERNAME=root \\
+                               -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \\  // À ajouter
+                               ${DOCKER_IMAGE}:${DOCKER_TAG}
+                       '''
                    }
+               }
+           }
+
+                 post {
+                     always {
+                         cleanWs()
+                         script {
+                             emailext (
+                                 subject: "${currentBuild.result}: Job ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
+                                 body: """
+                                     Build: ${env.JOB_NAME} - #${env.BUILD_NUMBER}
+                                     Status: ${currentBuild.result}
+                                     URL: ${env.BUILD_URL}
+                                     Image: ${DOCKER_IMAGE}:${DOCKER_TAG}
+                                 """,
+                                 to: 'devops@example.com'
+                             )
+                         }
+                     }
     }
 }
