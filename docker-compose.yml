@@ -6,7 +6,7 @@ services:
     container_name: timesheet-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD:  # À définir dans .env
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
       MYSQL_DATABASE: stationSki
     ports:
       - "3306:3306"
@@ -30,9 +30,10 @@ services:
     ports:
       - "8089:8089"
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true"
       SPRING_DATASOURCE_USERNAME: root
-
+      SPRING_DATASOURCE_PASSWORD: ""
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SERVER_SERVLET_CONTEXT_PATH: /api
       SPRING_MVC_FORMAT_DATE: "yyyy-MM-dd"
