@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    environment {
+        DOCKER_IMAGE = 'walidkhrouf/skier-app'
+        DOCKER_TAG = '1.0.0'
+    }
     stages {
         stage('Build') {
             steps {
@@ -29,7 +33,7 @@ pipeline {
                     sh 'ls -la target/*.jar'
                     sh "sed -i 's|openjdk:11-jdk-alpine|eclipse-temurin:11-jdk-alpine|g' Dockerfile"
                     sh 'docker build --network=host -t skier-app:latest .'
-                    sh 'docker tag skier-app:latest walidkhrouf/skier-app:1.0.0'
+                    sh 'docker tag skier-app:latest ${DOCKER_IMAGE}:${DOCKER_TAG}'
                 }
             }
         }
@@ -40,7 +44,7 @@ pipeline {
                                                    usernameVariable: 'DOCKER_HUB_USER',
                                                    passwordVariable: 'DOCKER_HUB_PWD')]) {
                         sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
-                        sh 'docker push walidkhrouf/skier-app:1.0.0'
+                        sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
                     }
                 }
             }
@@ -48,29 +52,31 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    sh '''
-                        docker stop walidkhrouf-app timesheet-mysql || true
-                        docker rm walidkhrouf-app timesheet-mysql || true
-                        docker network create timesheet-net || true
+                    withCredentials([string(credentialsId: 'mysql-root-password', variable: 'DB_PASSWORD')]) {
+                        sh '''#!/bin/bash
+                            docker stop walidkhrouf-app timesheet-mysql || true
+                            docker rm walidkhrouf-app timesheet-mysql || true
+                            docker network create timesheet-net || true
 
-                        docker run -d --name timesheet-mysql \
-                            --network timesheet-net \
-                            -e MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \  // À définir comme secret
-                            -e MYSQL_DATABASE=stationSki \
-                            -p 3306:3306 \
-                            -v mysql_data:/var/lib/mysql \
-                            mysql:5.7
+                            docker run -d --name timesheet-mysql \\
+                                --network timesheet-net \\
+                                -e MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \\
+                                -e MYSQL_DATABASE=stationSki \\
+                                -p 3306:3306 \\
+                                -v mysql_data:/var/lib/mysql \\
+                                mysql:5.7
 
-                        timeout 300s bash -c 'while [[ "$(docker inspect -f '{{.State.Health.Status}}' timesheet-mysql)" != "healthy" ]]; do sleep 5; echo "Waiting for MySQL..."; done'
+                            timeout 300s bash -c 'while [[ "$(docker inspect -f \\'{{.State.Health.Status}}\\' timesheet-mysql)" != "healthy" ]]; do sleep 5; echo "Waiting for MySQL..."; done'
 
-                        docker run -d --name walidkhrouf-app \
-                            --network timesheet-net \
-                            -p 8089:8089 \
-                            -e SPRING_DATASOURCE_URL=jdbc:mysql://timesheet-mysql:3306/stationSki \
-                            -e SPRING_DATASOURCE_USERNAME=root \
-                            -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \  // À ajouter
-                            ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    '''
+                            docker run -d --name walidkhrouf-app \\
+                                --network timesheet-net \\
+                                -p 8089:8089 \\
+                                -e SPRING_DATASOURCE_URL=jdbc:mysql://timesheet-mysql:3306/stationSki \\
+                                -e SPRING_DATASOURCE_USERNAME=root \\
+                                -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \\
+                                ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        '''
+                    }
                 }
             }
         }
