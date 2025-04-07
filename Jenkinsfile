@@ -52,7 +52,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'mysql-root-password', variable: 'DB_PASSWORD')]) {
+                  
                         sh '''#!/bin/bash
                             docker stop walidkhrouf-app timesheet-mysql || true
                             docker rm walidkhrouf-app timesheet-mysql || true
@@ -76,7 +76,7 @@ pipeline {
                                 -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \\
                                 ${DOCKER_IMAGE}:${DOCKER_TAG}
                         '''
-                    }
+
                 }
             }
         }
