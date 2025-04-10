@@ -3,35 +3,46 @@ version: "3.8"
 services:
   mysqldb:
     image: mysql:5.7
+    container_name: timesheet-mysql
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=  # Should set a password for security
-      - MYSQL_DATABASE=stationSki
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: stationSki
     ports:
-      - "3306:3306"  # Keep as 3306 internally, no need to change
+      - "3306:3306"
     volumes:
       - db:/var/lib/mysql
+    networks:
+      - timesheet-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
 
   app-skier:
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
     image: walidkhrouf/skier-app:1.0.0
+    container_name: walidkhrouf-app
     restart: on-failure
     ports:
-      - "8089:8089"  # Matches your server.port
+      - "8089:8089"
     environment:
-      SPRING_APPLICATION_JSON: '{
-        "spring.datasource.url": "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true",
-        "spring.datasource.username": "root",
-        "spring.datasource.password": "",
-        "spring.jpa.hibernate.ddl-auto": "update",
-        "server.servlet.context-path": "/api",
-        "spring.mvc.format.date": "yyyy-MM-dd"
-      }'
-    stdin_open: true
-    tty: true
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true"
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SERVER_SERVLET_CONTEXT_PATH: /api
+      SPRING_MVC_FORMAT_DATE: "yyyy-MM-dd"
+    networks:
+      - timesheet-net
 
 volumes:
   db:
 
-
+networks:
+  timesheet-net:
+    driver: bridge
