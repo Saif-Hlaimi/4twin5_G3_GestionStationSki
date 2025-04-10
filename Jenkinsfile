@@ -3,6 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'walidkhrouf/skier-app'
         DOCKER_TAG = '1.0.0'
+         COMPOSE_FILE = 'docker-compose.yml'
     }
     stages {
         stage('Build') {
@@ -50,51 +51,66 @@ pipeline {
             }
         }
         stage('Deploy') {
-            steps {
-                script {
-                    sh '''#!/bin/bash
-                        docker stop walidkhrouf-app timesheet-mysql || true
-                        docker rm walidkhrouf-app timesheet-mysql || true
-                        docker network create timesheet-net || true
+                  steps {
+                      script {
+                          sh '''#!/bin/bash
+                              # 1. Vérification et nettoyage
+                              if docker-compose -f $COMPOSE_FILE ps -q mysqldb >/dev/null 2>&1; then
+                                  echo "Arrêt des services existants..."
+                                  docker-compose -f $COMPOSE_FILE down --volumes local
+                              fi
 
-                        docker run -d --name timesheet-mysql \\
-                            --network timesheet-net \\
-                            -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \\
-                            -e MYSQL_DATABASE=stationSki \\
-                            -p 3306:3306 \\
-                            -v mysql_data:/var/lib/mysql \\
-                            mysql:5.7
+                              # 2. Pull de la dernière image
+                              docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
 
-                        timeout 300s bash -c 'while [[ "$(docker inspect -f \\'{{.State.Health.Status}}\\' timesheet-mysql)" != "healthy" ]]; do sleep 5; echo "Waiting for MySQL..."; done'
+                              # 3. Déploiement avec healthcheck intégré
+                              docker-compose -f $COMPOSE_FILE up -d --build
 
-                        docker run -d --name walidkhrouf-app \\
-                            --network timesheet-net \\
-                            -p 8089:8089 \\
-                            -e SPRING_PROFILES_ACTIVE=docker \\
-                            -e SPRING_DATASOURCE_URL=jdbc:mysql://timesheet-mysql:3306/stationSki?createDatabaseIfNotExist=true \\
-                            -e SPRING_DATASOURCE_USERNAME=root \\
-                            -e SPRING_DATASOURCE_PASSWORD= \\
-                            ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    '''
-                }
-            }
-        }
-    }
-    post {
-        always {
-            cleanWs()
-            script {
-                emailext (
-                    subject: "${currentBuild.result}: Job ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
-                    body: """
-                        Build: ${env.JOB_NAME} - #${env.BUILD_NUMBER}
-                        Status: ${currentBuild.result}
-                        URL: ${env.BUILD_URL}
-                        Image: ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    """,
-                    to: 'devops@example.com'
-                )
-            }
-        }
+                              # 4. Vérification santé
+                              echo "Vérification de l'état des services..."
+                              timeout 180s bash -c '
+                                  while ! docker-compose -f $COMPOSE_FILE ps | grep "(healthy)"; do
+                                      sleep 5
+                                      echo "En attente des services healthy..."
+                                      docker-compose -f $COMPOSE_FILE ps
+                                  done
+                              '
+
+                              # 5. Affichage final
+                              echo "=== Déploiement réussi ==="
+                              docker-compose -f $COMPOSE_FILE ps
+                              curl -s http://localhost:8089/api/actuator/health | jq .
+                          '''
+                      }
+                  }
+              }
+          }
+          post {
+              failure {
+                  script {
+                      sh '''
+                          echo "=== DÉBOGAGE ÉCHEC ==="
+                          docker-compose -f $COMPOSE_FILE logs --tail=50
+                          docker ps -a
+                          netstat -tulnp | grep -E '3306|8089'
+                      '''
+                  }
+              }
+              always {
+                  cleanWs()
+                  script {
+                      emailext (
+                          subject: "${currentBuild.result}: Job ${env.JOB_NAME}",
+                          body: """
+                              Détails du déploiement:
+                              - Image: ${DOCKER_IMAGE}:${DOCKER_TAG}
+                              - MySQL: ${sh(returnStdout: true, script: 'docker inspect -f "{{.State.Health.Status}}" timesheet-mysql')}
+                              - App: ${sh(returnStdout: true, script: 'curl -s http://localhost:8089/api/actuator/health | jq .status')}
+                              Logs: ${env.BUILD_URL}console
+                          """,
+                          to: 'devops@example.com'
+                      )
+                  }
+              }
     }
 }
