@@ -48,57 +48,64 @@ pipeline {
                 }
             }
         }
-        stage('Deploy') {
-            steps {
-                script {
-                    sh '''#!/bin/bash
-                        set -e
+      stage('Deploy') {
+          steps {
+              script {
+                  sh '''#!/bin/bash
+                      set -e
 
-                        # Check and free ports if in use
-                        if lsof -i:3306; then
-                            echo "Port 3306 in use, attempting to free it"
-                            docker stop $(docker ps -q --filter "publish=3306") || true
-                        fi
-                        if lsof -i:8089; then
-                            echo "Port 8089 in use, attempting to free it"
-                            docker stop $(docker ps -q --filter "publish=8089") || true
-                        fi
+                      # Stop and remove any containers using ports 3306 and 8089
+                      echo "Checking for containers on port 3306..."
+                      if lsof -i:3306; then
+                          echo "Port 3306 in use, stopping containers..."
+                          docker stop $(docker ps -q --filter "publish=3306") || true
+                          docker rm -f $(docker ps -a -q --filter "publish=3306") || true
+                      fi
 
-                        # Clean up existing containers and network
-                        docker stop walidkhrouf-app timesheet-mysql || true
-                        docker rm -f walidkhrouf-app timesheet-mysql || true
-                        docker network rm timesheet-net || true
-                        docker network create timesheet-net || true
+                      echo "Checking for containers on port 8089..."
+                      if lsof -i:8089; then
+                          echo "Port 8089 in use, stopping containers..."
+                          docker stop $(docker ps -q --filter "publish=8089") || true
+                          docker rm -f $(docker ps -a -q --filter "publish=8089") || true
+                      fi
 
-                        # Run MySQL container
-                        docker run -d --name timesheet-mysql \\
-                            --network timesheet-net \\
-                            -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \\
-                            -e MYSQL_DATABASE=stationSki \\
-                            -p 3306:3306 \\
-                            -v mysql_data:/var/lib/mysql \\
-                            --health-cmd="mysqladmin ping -h localhost" \\
-                            --health-interval=10s \\
-                            --health-timeout=5s \\
-                            --health-retries=5 \\
-                            mysql:5.7
+                      # Additional cleanup for specific names (just in case)
+                      docker stop walidkhrouf-app timesheet-mysql || true
+                      docker rm -f walidkhrouf-app timesheet-mysql || true
 
-                        # Wait for MySQL to be healthy
-                        timeout 180s bash -c 'until docker inspect timesheet-mysql --format "{{.State.Health.Status}}" | grep "healthy"; do sleep 5; echo "Waiting for MySQL..."; done'
+                      # Clean up and recreate network
+                      docker network rm timesheet-net || true
+                      docker network create timesheet-net || true
 
-                        # Run application container
-                        docker run -d --name walidkhrouf-app \\
-                            --network timesheet-net \\
-                            -p 8089:8089 \\
-                            -e SPRING_PROFILES_ACTIVE=docker \\
-                            -e SPRING_DATASOURCE_URL=jdbc:mysql://timesheet-mysql:3306/stationSki?createDatabaseIfNotExist=true \\
-                            -e SPRING_DATASOURCE_USERNAME=root \\
-                            -e SPRING_DATASOURCE_PASSWORD= \\
-                            ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    '''
-                }
-            }
-        }
+                      # Run MySQL container
+                      docker run -d --name timesheet-mysql \\
+                          --network timesheet-net \\
+                          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \\
+                          -e MYSQL_DATABASE=stationSki \\
+                          -p 3306:3306 \\
+                          -v mysql_data:/var/lib/mysql \\
+                          --health-cmd="mysqladmin ping -h localhost" \\
+                          --health-interval=10s \\
+                          --health-timeout=5s \\
+                          --health-retries=5 \\
+                          mysql:5.7
+
+                      # Wait for MySQL to be healthy
+                      timeout 180s bash -c 'until docker inspect timesheet-mysql --format "{{.State.Health.Status}}" | grep "healthy"; do sleep 5; echo "Waiting for MySQL..."; done'
+
+                      # Run application container
+                      docker run -d --name walidkhrouf-app \\
+                          --network timesheet-net \\
+                          -p 8089:8089 \\
+                          -e SPRING_PROFILES_ACTIVE=docker \\
+                          -e SPRING_DATASOURCE_URL=jdbc:mysql://timesheet-mysql:3306/stationSki?createDatabaseIfNotExist=true \\
+                          -e SPRING_DATASOURCE_USERNAME=root \\
+                          -e SPRING_DATASOURCE_PASSWORD= \\
+                          ${DOCKER_IMAGE}:${DOCKER_TAG}
+                  '''
+              }
+          }
+      }
     }
     post {
         always {
