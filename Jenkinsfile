@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'walidkhrouf/skier-app'
         DOCKER_TAG = '1.0.0'
-        EMAIL_RECIPIENT = 'walidkhrouf2@gmail.com'
+        EMAIL_RECIPIENT = 'walid.khrouf@esprit.tn'
     }
     stages {
         stage('Build') {
@@ -136,7 +136,7 @@ pipeline {
                        port: '587',
                        auth: 'true',
                        user: 'walidkhrouf2@gmail.com',
-                       password: credentials('gmail-smtp-password')  
+                       password: credentials('gmail-smtp-password')
                    ]
                )
            }
