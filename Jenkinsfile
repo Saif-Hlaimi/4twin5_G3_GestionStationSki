@@ -136,7 +136,7 @@ pipeline {
                        port: '587',
                        auth: 'true',
                        user: 'walidkhrouf2@gmail.com',
-                       password: credentials('gmail-smtp-password')  # Create this credential
+                       password: credentials('gmail-smtp-password')  
                    ]
                )
            }
