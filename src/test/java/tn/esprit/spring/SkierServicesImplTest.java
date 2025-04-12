@@ -4,151 +4,143 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.spring.entities.*;
 import tn.esprit.spring.repositories.*;
 import tn.esprit.spring.services.*;
+
 import java.time.LocalDate;
 import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 @ExtendWith(SpringExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
- class SkierServicesImplTest {
-    @Autowired
-    private SkierServicesImpl skierServices;
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class SkierServicesImplIntegrationTest {
 
-    @Autowired
-    private ISkierRepository skierRepository;
+   @Autowired
+   private SkierServicesImpl skierServices;
 
-    @Test
-    @Order(1)
-    @Transactional
-     void testRetrieveAllSkiers() {
-        // Création de données de test
-        Skier skier1 = new Skier();
-        skier1.setFirstName("John");
-        skier1.setLastName("Doe");
+   @Autowired
+   private ISkierRepository skierRepository;
 
-        Skier skier2 = new Skier();
-        skier2.setFirstName("Jane");
-        skier2.setLastName("Smith");
+   @Autowired
+   private ISubscriptionRepository subscriptionRepository;
 
-        // Sauvegarde dans la base de données
-        skierRepository.save(skier1);
-        skierRepository.save(skier2);
+   @Test
+   @Order(1)
+   @Transactional
+   void testRetrieveAllSkiers() {
+      Skier skier1 = new Skier();
+      skier1.setFirstName("Walid");
+      skier1.setLastName("Khrouf");
+      skier1.setPistes(new HashSet<>());
+      skier1.setRegistrations(new HashSet<>());
+      skierRepository.save(skier1);
 
-        // Exécution de la méthode à tester
-        List<Skier> skiers = skierServices.retrieveAllSkiers();
+      Skier skier2 = new Skier();
+      skier2.setFirstName("Mohamed");
+      skier2.setLastName("Benamor");
+      skier2.setPistes(new HashSet<>());
+      skier2.setRegistrations(new HashSet<>());
+      skierRepository.save(skier2);
 
-        // Vérifications
-        assertFalse(skiers.isEmpty(), "La liste ne devrait pas être vide");
-        assertTrue(skiers.size() >= 2, "Devrait trouver au moins 2 skieurs");
+      List<Skier> skiers = skierServices.retrieveAllSkiers();
 
-        // Vérification des données persistées
-        boolean foundJohn = skiers.stream()
-                .anyMatch(s -> "John".equals(s.getFirstName()));
-        boolean foundJane = skiers.stream()
-                .anyMatch(s -> "Jane".equals(s.getFirstName()));
+      assertFalse(skiers.isEmpty(), "The list should not be empty");
+      assertTrue(skiers.size() >= 2, "Should find at least 2 skiers");
+      assertTrue(skiers.stream().anyMatch(s -> "Walid".equals(s.getFirstName())), "Walid Khrouf should be in the list");
+      assertTrue(skiers.stream().anyMatch(s -> "Mohamed".equals(s.getFirstName())), "Mohamed Benamor should be in the list");
+   }
 
-        assertTrue(foundJohn, "John Doe devrait être dans la liste");
-        assertTrue(foundJane, "Jane Smith devrait être dans la liste");
-    }
+   @Test
+   @Order(2)
+   @Transactional
+   void testAddSkier() {
+      Skier skier = new Skier();
+      skier.setFirstName("Ali");
+      skier.setLastName("Flen");
+      skier.setDateOfBirth(LocalDate.of(1990, 1, 1));
+      skier.setCity("Paris");
+      skier.setPistes(new HashSet<>());
+      skier.setRegistrations(new HashSet<>());
 
-    @Test
-    @Order(2)
-    @Transactional
-     void testAddSkier() {
-        // Création d'un skieur avec un abonnement annuel
-        Skier skier = new Skier();
-        skier.setFirstName("Alice");
-        skier.setLastName("Johnson");
+      Subscription subscription = new Subscription();
+      subscription.setTypeSub(TypeSubscription.ANNUAL);
+      subscription.setStartDate(LocalDate.now());
+      subscription.setPrice(100.0f);
+      skier.setSubscription(subscription);
 
-        Subscription subscription = new Subscription();
-        subscription.setTypeSub(TypeSubscription.ANNUAL);
-        subscription.setStartDate(LocalDate.now());
-        skier.setSubscription(subscription);
+      Skier savedSkier = skierServices.addSkier(skier);
 
-        // Exécution de la méthode à tester
-        Skier savedSkier = skierServices.addSkier(skier);
+      assertNotNull(savedSkier, "Saved skier should not be null");
+      assertNotNull(savedSkier.getNumSkier(), "Skier should have an ID");
+      assertEquals("Ali", savedSkier.getFirstName(), "First name should be Ali");
+      assertEquals("Flen", savedSkier.getLastName(), "Last name should be Flen");
+      assertNotNull(savedSkier.getSubscription(), "Subscription should not be null");
+      assertEquals(TypeSubscription.ANNUAL, savedSkier.getSubscription().getTypeSub(), "Subscription type should be ANNUAL");
+      assertEquals(subscription.getStartDate().plusYears(1), savedSkier.getSubscription().getEndDate(),
+              "Subscription end date should be one year after start date");
 
-        // Vérifications
-        assertNotNull(savedSkier, "Le skieur sauvegardé ne devrait pas être null");
-        assertNotNull(savedSkier.getNumSkier(), "Le skieur sauvegardé devrait avoir un numéro de skieur");
-        assertEquals("Alice", savedSkier.getFirstName(), "Le prénom du skieur devrait être Alice");
-        assertEquals("Johnson", savedSkier.getLastName(), "Le nom de famille du skieur devrait être Johnson");
+      Optional<Skier> retrievedSkier = skierRepository.findById(savedSkier.getNumSkier());
+      assertTrue(retrievedSkier.isPresent(), "Skier should exist in the database");
+      assertEquals("Ali", retrievedSkier.get().getFirstName(), "Retrieved skier first name should match");
+      assertEquals(subscription.getStartDate().plusYears(1), retrievedSkier.get().getSubscription().getEndDate(),
+              "Retrieved subscription end date should match");
+   }
 
-        // Vérification de la date de fin de l'abonnement
-        LocalDate expectedEndDate = subscription.getStartDate().plusYears(1);
-        assertEquals(expectedEndDate, savedSkier.getSubscription().getEndDate(), "La date de fin de l'abonnement devrait être un an après la date de début");
+   @Test
+   @Order(3)
+   @Transactional
+   void testRetrieveSkier() {
+      Skier skier = new Skier();
+      skier.setFirstName("Omar");
+      skier.setLastName("Khrouf");
+      skier.setDateOfBirth(LocalDate.of(1988, 3, 15));
+      skier.setCity("Nice");
+      skier.setPistes(new HashSet<>());
+      skier.setRegistrations(new HashSet<>());
+      Subscription subscription = new Subscription();
+      subscription.setTypeSub(TypeSubscription.SEMESTRIEL);
+      subscription.setStartDate(LocalDate.now());
+      subscription.setPrice(75.0f);
+      skier.setSubscription(subscription);
+      skier = skierRepository.save(skier);
+      Long skierId = skier.getNumSkier();
 
-        // Vérification que le skieur est bien enregistré dans la base de données
-        Optional<Skier> retrievedSkier = skierRepository.findById(savedSkier.getNumSkier());
-        assertTrue(retrievedSkier.isPresent(), "Le skieur devrait être trouvé dans la base de données");
-        assertEquals(savedSkier.getFirstName(), retrievedSkier.get().getFirstName(), "Le prénom du skieur récupéré devrait correspondre");
-        assertEquals(savedSkier.getLastName(), retrievedSkier.get().getLastName(), "Le nom de famille du skieur récupéré devrait correspondre");
-        assertEquals(savedSkier.getSubscription().getEndDate(), retrievedSkier.get().getSubscription().getEndDate(), "La date de fin de l'abonnement récupérée devrait correspondre");
-    }
+      Skier retrievedSkier = skierServices.retrieveSkier(skierId);
 
+      assertNotNull(retrievedSkier, "Retrieved skier should not be null");
+      assertEquals(skierId, retrievedSkier.getNumSkier(), "Skier ID should match");
+      assertEquals("Omar", retrievedSkier.getFirstName(), "First name should be Omar");
+      assertEquals("Khrouf", retrievedSkier.getLastName(), "Last name should be Khrouf");
+      assertNotNull(retrievedSkier.getSubscription(), "Subscription should not be null");
+      assertEquals(TypeSubscription.SEMESTRIEL, retrievedSkier.getSubscription().getTypeSub(), "Subscription type should be SEMESTRIEL");
 
-    @Test
-    @Order(5)
-    @Transactional
-     void testRetrieveSkier() {
-        // Création d'un skieur pour le test
-        Skier skier = new Skier();
-        skier.setFirstName("Test");
-        skier.setLastName("User");
-        skier.setSubscription(new Subscription()); // Ajoutez un abonnement si nécessaire
+      Skier nonExistentSkier = skierServices.retrieveSkier(999999L);
+      assertNull(nonExistentSkier, "Non-existent skier should return null");
+   }
 
-        // Sauvegarde du skieur dans la base de données
-        Skier savedSkier = skierRepository.save(skier);
-        Long savedSkierId = savedSkier.getNumSkier();
+   @Test
+   @Order(4)
+   @Transactional
+   void testRemoveSkier() {
+      Skier skier = new Skier();
+      skier.setFirstName("Sami");
+      skier.setLastName("Flen");
+      skier.setPistes(new HashSet<>());
+      skier.setRegistrations(new HashSet<>());
+      skier = skierRepository.save(skier);
+      Long skierId = skier.getNumSkier();
 
-        // Exécution de la méthode à tester
-        Skier retrievedSkier = skierServices.retrieveSkier(savedSkierId);
+      skierServices.removeSkier(skierId);
 
-        // Vérifications
-        assertNotNull(retrievedSkier, "Le skieur récupéré ne devrait pas être null");
-        assertEquals(savedSkierId, retrievedSkier.getNumSkier(), "L'ID du skieur récupéré devrait correspondre");
-        assertEquals("Test", retrievedSkier.getFirstName(), "Le prénom du skieur récupéré devrait être 'Test'");
-        assertEquals("User", retrievedSkier.getLastName(), "Le nom de famille du skieur récupéré devrait être 'User'");
-
-        // Test avec un ID inexistant
-        Skier nonExistentSkier = skierServices.retrieveSkier(999999L);
-        assertNull(nonExistentSkier, "Un skieur avec un ID inexistant devrait retourner null");
-    }
-
-
-    @Test
-    @Order(5)
-    @Transactional
-     void testRetrieveSkierById() {
-        // Création d'un skieur pour le test
-        Skier skier = new Skier();
-        skier.setFirstName("TestSkier");
-        skier.setLastName("SkierLastName");
-        skier.setSubscription(new Subscription()); // Ajoutez un abonnement si nécessaire
-
-        // Sauvegarde du skieur dans la base de données
-        Skier savedSkier = skierRepository.save(skier);
-        Long savedSkierId = savedSkier.getNumSkier();
-
-        // Exécution de la méthode à tester
-        Skier retrievedSkier = skierServices.retrieveSkier(savedSkierId);
-
-        // Vérifications
-        assertNotNull(retrievedSkier, "Le skieur récupéré ne devrait pas être null");
-        assertEquals(savedSkierId, retrievedSkier.getNumSkier(), "L'ID du skieur récupéré devrait correspondre");
-        assertEquals("TestSkier", retrievedSkier.getFirstName(), "Le prénom du skieur récupéré devrait être 'TestSkier'");
-        assertEquals("SkierLastName", retrievedSkier.getLastName(), "Le nom de famille du skieur récupéré devrait être 'SkierLastName'");
-
-        // Test avec un ID inexistant
-        Skier nonExistentSkier = skierServices.retrieveSkier(999999L);
-        assertNull(nonExistentSkier, "Un skieur avec un ID inexistant devrait retourner null");
-    }
+      Optional<Skier> deletedSkier = skierRepository.findById(skierId);
+      assertFalse(deletedSkier.isPresent(), "Skier should be deleted from the database");
+   }
 }
