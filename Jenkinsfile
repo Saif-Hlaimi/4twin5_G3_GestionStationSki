@@ -41,12 +41,15 @@ pipeline {
 				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
         }*/
 	     stage('Sonar Analysis') {
-                    steps {
-                        withSonarQubeEnv('sq1') {
-			sh 'mvn sonar:sonar -Dsonar.login=50410e1b97c8fc61986b12994e388baeff8bc3aa'
-                        }
-                    }
-                }
+ 		   steps {
+        withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
+            withSonarQubeEnv('sq1') {
+                sh 'mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN'
+            }
+        }
+    }
+}
+
 
 
           stage('Deploy avec Docker Compose') {
