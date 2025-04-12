@@ -43,7 +43,7 @@ pipeline {
   stage('Sonar Analysis') {
                     steps {
                         withSonarQubeEnv('sq1') {
-                            sh 'mvn sonar:sonar'
+sh 'mvn sonar:sonar -Dsonar.login=50410e1b97c8fc61986b12994e388baeff8bc3aa'
                         }
                     }
                 }
