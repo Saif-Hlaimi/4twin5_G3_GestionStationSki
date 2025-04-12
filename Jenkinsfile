@@ -35,10 +35,20 @@ pipeline {
 				sh 'mvn -Dtest=RegistrationServicesImplTest clean test'
             }
         }
+	    /*
          stage('Nexus') {
 			steps {
 				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
-        }
+        }*/
+	     stage('Sonar Analysis') {
+                    steps {
+                        withSonarQubeEnv('sq1') {
+                            sh 'mvn sonar:sonar'
+                        }
+                    }
+                }
+
+
           stage('Deploy avec Docker Compose') {
                     steps {
                         script {
