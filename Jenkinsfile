@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'walidkhrouf/skier-app'
         DOCKER_TAG = '1.0.0'
-        EMAIL_RECIPIENT = 'walid.khrouf@esprit.tn'
+        EMAIL_RECIPIENT = 'walidkhrouf2@gmail.com'
     }
     stages {
         stage('Build') {
@@ -114,30 +114,33 @@ pipeline {
          }
      }
     }
-     post {
-           always {
-               script {
-                   // Debugging: Print all variables
-                   echo "Current build result: ${currentBuild.currentResult}"
-                   echo "DOCKER_IMAGE: ${env.DOCKER_IMAGE}"
-                   echo "DOCKER_TAG: ${env.DOCKER_TAG}"
-
-                   // Send email (with improved formatting)
-                   emailext(
-                       subject: "${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                       body: """<h2>Build Notification</h2>
-                           <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                           <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
-                           <p><strong>Status:</strong> ${currentBuild.currentResult}</p>
-                           <p><strong>URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                           <p><strong>Docker Image:</strong> ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}</p>
-                           <p><strong>Duration:</strong> ${currentBuild.durationString.replace(' and counting', '')}</p>
-                       """,
-                       to: env.EMAIL_RECIPIENT,
-                       mimeType: 'text/html'
-                   )
-               }
-               cleanWs() // Clean workspace AFTER sending email
+   post {
+       always {
+           script {
+               // Force authentication by specifying credentials
+               emailext(
+                   subject: "${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                   body: """<h2>Build Notification</h2>
+                       <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                       <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
+                       <p><strong>Status:</strong> ${currentBuild.currentResult}</p>
+                       <p><strong>URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                   """,
+                   to: env.EMAIL_RECIPIENT,
+                   mimeType: 'text/html',
+                   replyTo: 'walidkhrouf2@gmail.com',
+                   from: 'walidkhrouf2@gmail.com',
+                   // These force authentication
+                   smtp: [
+                       host: 'smtp.gmail.com',
+                       port: '587',
+                       auth: 'true',
+                       user: 'walidkhrouf2@gmail.com',
+                       password: credentials('gmail-smtp-password')  # Create this credential
+                   ]
+               )
            }
-     }
+           cleanWs()
+       }
+   }
 }
