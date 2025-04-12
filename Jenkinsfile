@@ -4,6 +4,7 @@ pipeline {
         DOCKER_IMAGE = 'walidkhrouf/skier-app'
         DOCKER_TAG = '1.0.0'
         EMAIL_RECIPIENT = 'walid.khrouf@esprit.tn'
+        AUTO_BUILD = 'http://192.168.33.10:8080/job/WalidKhrouf-4TWIN5-G3/build?token=pipeline-jenkinsfile-token'
     }
     stages {
         stage('Build') {
@@ -125,6 +126,7 @@ pipeline {
                        <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
                        <p><strong>Status:</strong> ${currentBuild.currentResult}</p>
                        <p><strong>URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                       <p><strong>AUTO BUILD URL:</strong> <a href="${env.AUTO_BUILD}">${env.AUTO_BUILD}</a></p>
                    """,
                    to: env.EMAIL_RECIPIENT,
                    mimeType: 'text/html',
