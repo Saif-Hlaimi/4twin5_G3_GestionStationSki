@@ -3,6 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'walidkhrouf/skier-app'
         DOCKER_TAG = '1.0.0'
+        EMAIL_RECIPIENT = 'walid.khrouf@esprit.tn'
     }
     stages {
         stage('Build') {
@@ -113,21 +114,30 @@ pipeline {
          }
      }
     }
-    post {
-        always {
-            cleanWs()
-            script {
-                emailext (
-                    subject: "${currentBuild.result}: Job ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
-                    body: """
-                        Build: ${env.JOB_NAME} - #${env.BUILD_NUMBER}
-                        Status: ${currentBuild.result}
-                        URL: ${env.BUILD_URL}
-                        Image: ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    """,
-                    to: 'walid.khrouf@esprit.tn'
-                )
-            }
-        }
-    }
+     post {
+           always {
+               script {
+                   // Debugging: Print all variables
+                   echo "Current build result: ${currentBuild.currentResult}"
+                   echo "DOCKER_IMAGE: ${env.DOCKER_IMAGE}"
+                   echo "DOCKER_TAG: ${env.DOCKER_TAG}"
+
+                   // Send email (with improved formatting)
+                   emailext(
+                       subject: "${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                       body: """<h2>Build Notification</h2>
+                           <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                           <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
+                           <p><strong>Status:</strong> ${currentBuild.currentResult}</p>
+                           <p><strong>URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                           <p><strong>Docker Image:</strong> ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}</p>
+                           <p><strong>Duration:</strong> ${currentBuild.durationString.replace(' and counting', '')}</p>
+                       """,
+                       to: env.EMAIL_RECIPIENT,
+                       mimeType: 'text/html'
+                   )
+               }
+               cleanWs() // Clean workspace AFTER sending email
+           }
+     }
 }
