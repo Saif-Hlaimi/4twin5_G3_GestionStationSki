@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'walidkhrouf/skier-app'
         DOCKER_TAG = '1.0.0'
-        EMAIL_RECIPIENT = 'walidkhrouf9@gmail.com'
+        EMAIL_RECIPIENT = 'walid.khrouf@esprit.tn'
     }
     stages {
         stage('Build') {
