@@ -125,7 +125,7 @@ pipeline {
                         URL: ${env.BUILD_URL}
                         Image: ${DOCKER_IMAGE}:${DOCKER_TAG}
                     """,
-                    to: 'devops@example.com'
+                    to: 'walid.khrouf@esprit.tn'
                 )
             }
         }
