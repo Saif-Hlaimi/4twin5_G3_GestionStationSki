@@ -40,13 +40,22 @@ pipeline {
 			steps {
 				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
         }*/
-  stage('Sonar Analysis') {
-                    steps {
-                        withSonarQubeEnv('sq1') {
-sh 'mvn sonar:sonar -Dsonar.login=50410e1b97c8fc61986b12994e388baeff8bc3aa'
-                        }
-                    }
-                }
+ stage('Sonar Analysis') {
+    steps {
+        withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
+            withSonarQubeEnv('sq1') {
+                sh """
+                    export SONAR_TOKEN=${SONAR_TOKEN}
+                    mvn sonar:sonar \
+                        -Dsonar.login=$SONAR_TOKEN \
+                        -Dsonar.projectKey=tn.esprit.spring:gestion-station-ski \
+                        -Dsonar.host.url=http://192.168.1.18:8181
+                """
+            }
+        }
+    }
+}
+
 
 
 
