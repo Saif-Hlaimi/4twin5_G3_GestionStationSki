@@ -40,15 +40,22 @@ pipeline {
 			steps {
 				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
         }*/
-	     stage('Sonar Analysis') {
- 		   steps {
-        withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
-            withSonarQubeEnv('sq1') {
-                sh 'mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN'
+	   stage('Sonar Analysis') {
+    steps {
+        script {
+            try {
+                withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
+                    withSonarQubeEnv('sq1') {
+                        sh "mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.projectKey=tn.esprit.spring:gestion-station-ski -Dsonar.host.url=http://192.168.1.18:8181"
+                    }
+                }
+            } catch (Exception e) {
+                error "SonarQube analysis failed: ${e.getMessage()}"
             }
         }
     }
 }
+
 
 
 
