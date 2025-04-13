@@ -37,6 +37,12 @@ pipeline {
             }
         }
 
+            stage('Nexus') {
+                    steps {
+                        sh 'mvn clean deploy -Dmaven.test.skip=true'
+                    }
+                }
+
         stage('Docker Build') {
             steps {
                 sh "docker build -t ${DOCKER_IMAGE} ."
