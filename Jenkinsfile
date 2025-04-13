@@ -5,8 +5,8 @@ pipeline {
         MAVEN_OPTS = "--add-opens java.base/java.lang=ALL-UNNAMED -Djdk.module.illegalAccess=permit"
         M2_HOME = "/usr/share/maven"
         PATH = "${M2_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
-        DOCKER_IMAGE = "gestion-station-ski:latest"
-        DOCKER_TAG = '1.0.0'
+        DOCKER_IMAGE = "gestion-station-ski"
+        DOCKER_TAG = "1.0.0"
     }
 
     stages {
@@ -68,7 +68,7 @@ pipeline {
 
     post {
         always {
-            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/**/*.xml'
+            junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
             cleanWs()
         }
         success {
