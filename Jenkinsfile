@@ -1,9 +1,9 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE = 'saifhlaimi/gestion-station-ski' // Adjust to your DockerHub username
+        DOCKER_IMAGE = 'saifhl888/gestion-station-ski' // Matches your DockerHub login
         DOCKER_TAG = '1.0.0'
-        EMAIL_RECIPIENT = 'saif.hlaimi@esprit.tn' // Replace with your email
+        EMAIL_RECIPIENT = 'saif.hlaimi@esprit.tn'
         JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
         MAVEN_OPTS = "--add-opens java.base/java.lang=ALL-UNNAMED -Djdk.module.illegalAccess=permit"
         M2_HOME = "/usr/share/maven"
@@ -35,7 +35,12 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    sh 'docker build --network=host -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                                   usernameVariable: 'DOCKER_HUB_USER',
+                                                   passwordVariable: 'DOCKER_HUB_PWD')]) {
+                        sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
+                        sh 'docker build --network=host -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                    }
                 }
             }
         }
@@ -65,15 +70,8 @@ pipeline {
                     """,
                     to: env.EMAIL_RECIPIENT,
                     mimeType: 'text/html',
-                    replyTo: 'saif.hlaimi@esprit.tn', // Replace with your email
-                    from: 'saif.hlaimi@esprit.tn',    // Replace with your email
-                    smtp: [
-                        host: 'smtp.gmail.com',
-                        port: '587',
-                        auth: 'true',
-                        user: 'saif.hlaimi@esprit.tn', // Replace with your email
-                        password: credentials('gmail-smtp-password') // Add this credential in Jenkins
-                    ]
+                    replyTo: 'saif.hlaimi@esprit.tn',
+                    from: 'saif.hlaimi@esprit.tn'
                 )
             }
             junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
