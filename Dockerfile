@@ -1,12 +1,7 @@
-
-FROM maven:3.8.7-openjdk-17 AS builder
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-FROM openjdk:17-jdk
-WORKDIR /app
-COPY --from=builder /app/target/gestion-station-ski-1.0.jar gestion-station-ski.jar
+FROM eclipse-temurin:11-jdk-alpine
 EXPOSE 9000
-CMD ["java", "-jar", "gestion-station-ski.jar"]
+ENV NEXUS_URL="http://localhost:8081/repository/maven-releases/tn/esprit/spring/gestion-station-ski/1.0/gestion-station-ski-1.0.jar"
+RUN wget -O /gestion-station-ski-1.0.jar "$NEXUS_URL"
+
+
+ENTRYPOINT ["java","-jar","/gestion-station-ski-1.0.jar"]

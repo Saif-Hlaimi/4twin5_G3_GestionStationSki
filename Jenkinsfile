@@ -6,6 +6,7 @@ pipeline {
         M2_HOME = "/usr/share/maven"
         PATH = "${M2_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
         DOCKER_IMAGE = "gestion-station-ski:latest"
+        DOCKER_TAG = '1.0.0'
     }
 
     stages {
@@ -43,21 +44,27 @@ pipeline {
                     }
                 }
 
-        stage('Docker Build') {
-            steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
-            }
-        }
-
-        stage('Docker Deploy') {
-            steps {
-                sh '''
-                    docker stop gestion-station-ski || true
-                    docker rm gestion-station-ski || true
-                    docker run -d --name gestion-station-ski -p 9000:9000 ${DOCKER_IMAGE}
-                '''
-            }
-        }
+             stage('Docker Build') {
+                 steps {
+                     script {
+                         // No need to list target/*.jar since we're fetching from Nexus
+                         sh 'docker build --network=host -t skier-app:latest .'
+                         sh 'docker tag skier-app:latest ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                     }
+                 }
+             }
+             stage('Push to DockerHub') {
+                 steps {
+                     script {
+                         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                                        usernameVariable: 'DOCKER_HUB_USER',
+                                                        passwordVariable: 'DOCKER_HUB_PWD')]) {
+                             sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
+                             sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                         }
+                     }
+                 }
+             }
     }
 
     post {
