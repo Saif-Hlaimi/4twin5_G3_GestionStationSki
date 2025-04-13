@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: station-ski-mysql
+    networks:
+      - station-ski-net
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=stationSki
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  app:
+    image: saifhl888/gestion-station-ski:1.0.0
+    container_name: gestion-station-ski-app
+    networks:
+      - station-ski-net
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://station-ski-mysql:3306/stationSki?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    ports:
+      - "9000:9000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+networks:
+  station-ski-net:
+    name: station-ski-net
+volumes:
+  mysql_data:
