@@ -44,27 +44,28 @@ pipeline {
                     }
                 }
 
-             stage('Docker Build') {
-                 steps {
-                     script {
-                         // No need to list target/*.jar since we're fetching from Nexus
-                         sh 'docker build --network=host -t skier-app:latest .'
-                         sh 'docker tag skier-app:latest ${DOCKER_IMAGE}:${DOCKER_TAG}'
-                     }
-                 }
-             }
-             stage('Push to DockerHub') {
-                 steps {
-                     script {
-                         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                                                        usernameVariable: 'DOCKER_HUB_USER',
-                                                        passwordVariable: 'DOCKER_HUB_PWD')]) {
-                             sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
-                             sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
-                         }
-                     }
-                 }
-             }
+        stage('Docker Build') {
+                    steps {
+                        script {
+                            sh 'docker build --network=host -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                            // Tag command fixed to use single tag
+                        }
+                    }
+                }
+
+                stage('Push to DockerHub') {
+                    steps {
+                        script {
+                            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                                            usernameVariable: 'DOCKER_HUB_USER',
+                                                            passwordVariable: 'DOCKER_HUB_PWD')]) {
+                                sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
+                                sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                            }
+                        }
+                    }
+                }
+            }
     }
 
     post {
