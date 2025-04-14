@@ -114,47 +114,41 @@ pipeline {
 
 	    
     }
-post {
-    always {
-        script {
-            def buildStatus = currentBuild.currentResult
-            def buildColor = buildStatus == 'SUCCESS' ? 'green' : 'red'
-            def title = buildStatus == 'SUCCESS' ? '🎉 Succès du pipeline' : ' Échec du pipeline'
-
-            // Changelog (liste des commits s’il y en a)
-            def changes = ""
-            if (currentBuild.changeSets.size() > 0) {
-                for (changeLogSet in currentBuild.changeSets) {
-                    for (entry in changeLogSet.items) {
-                        changes += "<li><b>${entry.author}</b>: ${entry.msg}</li>"
-                    }
-                }
-            } else {
-                changes = "<li>Aucun changement détecté</li>"
-            }
-
-            // Contenu HTML du mail
-            def htmlContent = """
-                <html>
-                <body style="font-family: Arial, sans-serif; color: #333;">
-                    <h2 style="color:${buildColor};">${title}</h2>
-                    <p><strong> Job :</strong> ${env.JOB_NAME}</p>
-                    <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
-                    <p><strong>Durée :</strong> ${currentBuild.durationString}</p>
-                    <p><strong>Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                    <hr/>
-                    <h3>📝 Changelog :</h3>
-                    <ul>${changes}</ul>
-                </body>
-                </html>
-            """
-
-            // Envoi de l'email
-            mail to: 'ferielyahyaouiii@gmail.com',
-                 subject: "${buildStatus} - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 mimeType: 'text/html',
-                 body: htmlContent
-        }
+ post {
+    success {
+        mail to: 'ferielyahyaouiii@gmail.com',
+             subject: " Succès - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+             mimeType: 'text/html',
+             body: """
+             <html>
+                 <body style="font-family:Arial, sans-serif; color:#333;">
+                     <h2 style="color:green;">Pipeline terminé avec succès</h2>
+                     <p><strong> Job :</strong> ${env.JOB_NAME}</p>
+                     <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
+                     <p><strong> Durée :</strong> ${currentBuild.durationString}</p>
+                     <p><strong> Status :</strong> <span style="color:green;"><b>SUCCESS</b></span></p>
+                     <p><strong> Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                 </body>
+             </html>
+             """
     }
-}
+
+    failure {
+        mail to: 'ferielyahyaouiii@gmail.com',
+             subject: " Échec - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+             mimeType: 'text/html',
+             body: """
+             <html>
+                 <body style="font-family:Arial, sans-serif; color:#333;">
+                     <h2 style="color:red;"> Le pipeline a échoué</h2>
+                     <p><strong> Job :</strong> ${env.JOB_NAME}</p>
+                     <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
+                     <p><strong>Durée :</strong> ${currentBuild.durationString}</p>
+                     <p><strong> Status :</strong> <span style="color:red;"><b>FAILURE</b></span></p>
+                     <p><strong> Étape échouée :</strong> Consulte les logs dans Jenkins</p>
+                     <p><strong> Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                 </body>
+             </html>
+             """
+    }
 }
