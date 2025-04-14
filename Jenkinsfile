@@ -94,7 +94,8 @@ pipeline {
             steps {
                 script {
                     echo "Vérification de l'état de Grafana depuis Jenkins..."
-            
+
+                    try {
                         def response = sh(script: """
                             curl -s -o /dev/null -w "%{http_code}" http://grafana:3000
                         """, returnStdout: true).trim()
@@ -104,7 +105,9 @@ pipeline {
                         } else {
                             echo "Grafana n'est pas accessible depuis Jenkins. Code HTTP: ${response}"
                         }
-                   
+                    } catch (Exception e) {
+                        echo "Erreur lors de la vérification de Grafana : ${e.message}"
+                    }
                 }
             }
         }
