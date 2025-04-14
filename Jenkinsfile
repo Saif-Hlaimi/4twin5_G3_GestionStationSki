@@ -1,92 +1,89 @@
 pipeline {
-	agent any
+    agent any
+
     environment {
-		JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
-        M2_HOME = "/usr/share/maven"  // Mise à jour du chemin de Maven
+        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
+        M2_HOME = "/usr/share/maven"
         PATH = "$M2_HOME/bin:$PATH"
-        DOCKER_IMAGE = 'ferielyahyaoui/gestion-station-ski:1.0.0'
-
-
+        DOCKER_IMAGE = 'ferielyahyaoui/gestion-station-ski'
+        DOCKER_TAG = '1.0.0'
     }
 
     stages {
-		stage('Hello Test') {
-			steps {
-				echo ' hello feryal '
+
+        stage('Hello Test') {
+            steps {
+                echo '👋 Hello Feryal!'
             }
         }
 
         stage('Git Checkout') {
-			steps {
-				git branch: 'FeryalYahyaoui-4TWIN5-G3',
+            steps {
+                git branch: 'FeryalYahyaoui-4TWIN5-G3',
                     url: 'https://github.com/Saif-Hlaimi/4twin5_G3_GestionStationSki.git',
                     credentialsId: 'jenkins-key'
             }
         }
 
-        stage('Clean compile') {
-			steps {
-				sh 'mvn clean compile'
+        stage('Clean & Compile') {
+            steps {
+                sh 'mvn clean compile'
             }
         }
 
         stage('Test Projet') {
-			steps {
-				sh 'mvn -Dtest=RegistrationServicesImplTest clean test'
+            steps {
+                sh 'mvn -Dtest=RegistrationServicesImplTest clean test'
             }
         }
-	    
-	/*    
-         stage('Nexus') {
-			steps {
-				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
-        }*/
 
-
-	    
- stage('Sonar Analysis') {
-    steps {
-        withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
-            withSonarQubeEnv('sq1') {
-                sh """
-                    export SONAR_TOKEN=${SONAR_TOKEN}
-                    mvn sonar:sonar \
-                        -Dsonar.login=$SONAR_TOKEN \
-                        -Dsonar.projectKey=tn.esprit.spring:gestion-station-ski \
-                        -Dsonar.host.url=http://192.168.1.18:8181
-                """
-            }
-        }
-    }
-}
-
-
-
-
-
-
-          stage('Deploy avec Docker Compose') {
-                    steps {
-                        script {
-                              sh 'which docker || echo "Docker non disponible"'
-         		     sh 'docker pull $DOCKER_IMAGE'
-                	    sh 'docker-compose down || true'
-       			     sh 'docker-compose up -d'
-                        }
+        stage('Sonar Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
+                    withSonarQubeEnv('sq1') {
+                        sh """
+                            mvn sonar:sonar \
+                            -Dsonar.login=$SONAR_TOKEN \
+                            -Dsonar.projectKey=tn.esprit.spring:gestion-station-ski \
+                            -Dsonar.host.url=http://192.168.1.18:8181
+                        """
                     }
                 }
+            }
+        }
 
-          stage('Vérification des conteneurs') {
-             steps {
+        stage('Build Docker Image') {
+            steps {
                 script {
-                  sh 'docker ps'
-                       }
-                       }
-          }
+                    def imageExists = sh(script: "docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG}", returnStdout: true).trim()
+                    if (!imageExists) {
+                        echo "🚧 Image not found. Building now..."
+                        sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    } else {
+                        echo "✅ Docker image already exists: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    }
+                }
+            }
+        }
 
+        stage('Deploy avec Docker Compose') {
+            steps {
+                script {
+                    sh 'which docker || echo "Docker non disponible"'
+                    sh 'docker pull $DOCKER_IMAGE:$DOCKER_TAG'
+                    sh 'docker-compose down || true'
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
 
+        stage('Vérification des conteneurs') {
+            steps {
+                sh 'docker ps'
+            }
+        }
 
-stage('Grafana') {
+      stage('Grafana') {
     steps {
         script {
             echo "Vérification de l'état de Grafana depuis Jenkins..."
@@ -111,23 +108,10 @@ stage('Grafana') {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	    
-	
-}
-
+    post {
+        always {
+            echo "🧹 Nettoyage du workspace..."
+            cleanWs()
+        }
+    }
 }
