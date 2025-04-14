@@ -93,7 +93,7 @@ pipeline {
  stage('Grafana') {
     steps {
         script {
-            def grafanaUrl = "http://localhost:3000"
+            def grafanaUrl = "http://192.168.1.18:3000"
             def dashboardUrl = "${grafanaUrl}/d/haryan-jenkins/jenkins3a-performance-and-health-overview?orgId=1&from=now-30m&to=now"
 
             echo "📊 Vérification de l'état de Grafana..."
