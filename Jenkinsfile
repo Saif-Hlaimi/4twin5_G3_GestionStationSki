@@ -13,7 +13,7 @@ pipeline {
 
         stage('Hello Test') {
             steps {
-                echo '👋 Hello Feryal!'
+                echo ' Hello Feryal!'
             }
         }
 
@@ -57,10 +57,37 @@ pipeline {
                 script {
                     def imageExists = sh(script: "docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG}", returnStdout: true).trim()
                     if (!imageExists) {
-                        echo "🚧 Image not found. Building now..."
+                        echo " Image not found. Building now..."
                         sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                     } else {
-                        echo "✅ Docker image already exists: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        echo " Docker image already exists: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        def imageName = "${DOCKER_IMAGE}".split('/')[1]
+                        def repo = "${DOCKER_IMAGE}".split('/')[0]
+
+                        def exists = sh(
+                            script: """
+                                curl -s -o /dev/null -w "%{http_code}" \
+                                https://hub.docker.com/v2/repositories/${repo}/${imageName}/tags/${DOCKER_TAG}
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        if (exists == '200') {
+                            echo "Image ${DOCKER_IMAGE}:${DOCKER_TAG} already exists on DockerHub. Skipping push."
+                        } else {
+                            echo " Image does not exist. Logging in and pushing..."
+                            sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                            sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        }
                     }
                 }
             }
@@ -106,9 +133,5 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            echo "🧹 Nettoyage du workspace..."
-        }
-    }
+  
 }
