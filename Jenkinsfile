@@ -107,9 +107,5 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            echo "🧹 Nettoyage du workspace..."
-        }
-    }
+  
 }
