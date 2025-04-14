@@ -65,33 +65,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Push to DockerHub') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        def imageName = "${DOCKER_IMAGE}".split('/')[1]
-                        def repo = "${DOCKER_IMAGE}".split('/')[0]
-
-                        def exists = sh(
-                            script: """
-                                curl -s -o /dev/null -w "%{http_code}" \
-                                https://hub.docker.com/v2/repositories/${repo}/${imageName}/tags/${DOCKER_TAG}
-                            """,
-                            returnStdout: true
-                        ).trim()
-
-                        if (exists == '200') {
-                            echo "Image ${DOCKER_IMAGE}:${DOCKER_TAG} already exists on DockerHub. Skipping push."
-                        } else {
-                            echo " Image does not exist. Logging in and pushing..."
-                            sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                            sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                        }
-                    }
-                }
-            }
-        }
+        
 
         stage('Deploy avec Docker Compose') {
             steps {
@@ -133,5 +107,9 @@ pipeline {
         }
     }
 
-  
+    post {
+        always {
+            echo "🧹 Nettoyage du workspace..."
+        }
+    }
 }
