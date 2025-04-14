@@ -114,19 +114,44 @@ pipeline {
 
 	    
     }
-     post {
-        success {
-            mail to: 'ferielyahyaouiii@gmail.com',
-                 subject: "✅ Build Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "Le pipeline s'est terminé avec succès. Voir les détails : ${env.BUILD_URL}"
-        }
-        failure {
-            mail to: 'ferielyahyaouiii@gmail.com',
-                 subject: "❌ Build Failure - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "Le pipeline a échoué. Vérifie les logs ici : ${env.BUILD_URL}"
-        }
+   post {
+    success {
+        mail to: 'ferielyahyaouiii@gmail.com',
+             subject: " Succès - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+             mimeType: 'text/html',
+             body: """
+             <html>
+                 <body style="font-family:Arial, sans-serif; color:#333;">
+                     <h2 style="color:green;">Pipeline terminé avec succès</h2>
+                     <p><strong> Job :</strong> ${env.JOB_NAME}</p>
+                     <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
+                     <p><strong> Durée :</strong> ${currentBuild.durationString}</p>
+                     <p><strong> Status :</strong> <span style="color:green;"><b>SUCCESS</b></span></p>
+                     <p><strong> Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                 </body>
+             </html>
+             """
     }
 
+    failure {
+        mail to: 'ferielyahyaouiii@gmail.com',
+             subject: " Échec - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+             mimeType: 'text/html',
+             body: """
+             <html>
+                 <body style="font-family:Arial, sans-serif; color:#333;">
+                     <h2 style="color:red;"> Le pipeline a échoué</h2>
+                     <p><strong> Job :</strong> ${env.JOB_NAME}</p>
+                     <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
+                     <p><strong>Durée :</strong> ${currentBuild.durationString}</p>
+                     <p><strong> Status :</strong> <span style="color:red;"><b>FAILURE</b></span></p>
+                     <p><strong> Étape échouée :</strong> Consulte les logs dans Jenkins</p>
+                     <p><strong> Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                 </body>
+             </html>
+             """
+    }
+}
 
 
   
