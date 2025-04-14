@@ -114,41 +114,16 @@ pipeline {
 
 	    
     }
-   post {
-    success {
-        emailext(
-            subject: " Build SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            body: """
-                <h2 style="color:green;">✔️ Build réussi</h2>
-                <p><b>Projet :</b> ${env.JOB_NAME}</p>
-                <p><b>Numéro de build :</b> #${env.BUILD_NUMBER}</p>
-                <p><b>Status :</b> SUCCESS </p>
-                <p><b>Date :</b> ${new Date()}</p>
-                <p><b>Voir les détails :</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-            """,
-            mimeType: 'text/html',
-            to: 'ferielyahyaouiii@gmail.com'
-        )
+      post {
+        always {
+            emailext(
+                subject: "Test Email Jenkins",
+                body: "Ceci est un test simple d'envoi d'e-mail depuis Jenkins.",
+                to: "ferielyahyaouiii@gmail.com"
+            )
+        }
     }
 
-    failure {
-        emailext(
-            subject: " Build FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            body: """
-                <h2 style="color:red;"> Build échoué</h2>
-                <p><b>Projet :</b> ${env.JOB_NAME}</p>
-                <p><b>Numéro de build :</b> #${env.BUILD_NUMBER}</p>
-                <p><b>Status :</b> FAILURE </p>
-                <p><b>Date :</b> ${new Date()}</p>
-                <p><b>Voir les détails :</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-            """,
-            mimeType: 'text/html',
-            to: 'ferielyahyaouiii@gmail.com'
-        )
-    }
-
-  
-}
 
 
   
