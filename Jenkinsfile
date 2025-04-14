@@ -90,28 +90,24 @@ pipeline {
             }
         }
 
-     stage('Dashboard Grafana') {
-    steps {
-        script {
-            echo " Vérification de l’état du dashboard Grafana..."
+  stage('Grafana') {
+            steps {
+                script {
+                    echo "Vérification de l'état de Grafana depuis Jenkins..."
+            
+                        def response = sh(script: """
+                            curl -s -o /dev/null -w "%{http_code}" http://grafana:3000
+                        """, returnStdout: true).trim()
 
-            // 1. Vérifier si Grafana répond
-            def response = sh(script: """
-                curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
-            """, returnStdout: true).trim()
-
-            if (response == '200') {
-                echo " Grafana est accessible."
-
-                // 2. Affichage du lien vers le dashboard
-                echo " Accès au dashboard Jenkins: http://localhost:3000/d/haryan-jenkins/jenkins3a-performance-and-health-overview?orgId=1&from=now-30m&to=now&timezone=browser"
-            } else {
-                echo " Grafana n’est pas accessible. Code HTTP : ${response}"
+                        if (response == '200') {
+                            echo "Grafana est opérationnel depuis Jenkins."
+                        } else {
+                            echo "Grafana n'est pas accessible depuis Jenkins. Code HTTP: ${response}"
+                        }
+                   
+                }
             }
         }
-    }
-}
-
     }
     post {
         always {
