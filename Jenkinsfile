@@ -114,13 +114,16 @@ pipeline {
 
 	    
     }
-      post {
-        always {
-            emailext(
-                subject: "Test Email Jenkins",
-                body: "Ceci est un test simple d'envoi d'e-mail depuis Jenkins.",
-                to: "ferielyahyaouiii@gmail.com"
-            )
+     post {
+        success {
+            mail to: 'ferielyahyaouiii@gmail.com',
+                 subject: "✅ Build Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "Le pipeline s'est terminé avec succès. Voir les détails : ${env.BUILD_URL}"
+        }
+        failure {
+            mail to: 'ferielyahyaouiii@gmail.com',
+                 subject: "❌ Build Failure - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "Le pipeline a échoué. Vérifie les logs ici : ${env.BUILD_URL}"
         }
     }
 
