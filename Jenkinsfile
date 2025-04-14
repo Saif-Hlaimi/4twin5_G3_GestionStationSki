@@ -114,44 +114,60 @@ pipeline {
 
 	    
     }
-   post {
-    success {
-        mail to: 'ferielyahyaouiii@gmail.com',
-             subject: " Succès - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-             mimeType: 'text/html',
-             body: """
-             <html>
-                 <body style="font-family:Arial, sans-serif; color:#333;">
-                     <h2 style="color:green;">Pipeline terminé avec succès</h2>
-                     <p><strong> Job :</strong> ${env.JOB_NAME}</p>
-                     <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
-                     <p><strong> Durée :</strong> ${currentBuild.durationString}</p>
-                     <p><strong> Status :</strong> <span style="color:green;"><b>SUCCESS</b></span></p>
-                     <p><strong> Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                 </body>
-             </html>
-             """
-    }
+ post {
+    always {
+        script {
+            def buildStatus = currentBuild.currentResult
+            def isSuccess = buildStatus == 'SUCCESS'
+            def color = isSuccess ? 'green' : 'red'
+            def title = isSuccess ? 'Pipeline terminé avec succès' : 'Échec du Pipeline'
+            def stageSummary = ""
 
-    failure {
-        mail to: 'ferielyahyaouiii@gmail.com',
-             subject: " Échec - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-             mimeType: 'text/html',
-             body: """
-             <html>
-                 <body style="font-family:Arial, sans-serif; color:#333;">
-                     <h2 style="color:red;"> Le pipeline a échoué</h2>
-                     <p><strong> Job :</strong> ${env.JOB_NAME}</p>
-                     <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
-                     <p><strong>Durée :</strong> ${currentBuild.durationString}</p>
-                     <p><strong> Status :</strong> <span style="color:red;"><b>FAILURE</b></span></p>
-                     <p><strong> Étape échouée :</strong> Consulte les logs dans Jenkins</p>
-                     <p><strong> Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                 </body>
-             </html>
-             """
+            try {
+                def flowNodes = currentBuild.rawBuild.getExecution().getCurrentHeads()
+                def executedStages = []
+                flowNodes.each { node ->
+                    def parent = node.getEnclosingBlocks()
+                    parent.each { block ->
+                        def stageName = block.getDisplayName()
+                        if (!executedStages.contains(stageName) && stageName != 'Declarative: Checkout SCM') {
+                            executedStages << stageName
+                        }
+                    }
+                }
+
+                executedStages.eachWithIndex { name, i ->
+                    def bullet = isSuccess ? "🟢" : "🔴"
+                    stageSummary += "<li>${bullet} ${name}</li>"
+                }
+            } catch (err) {
+                stageSummary = "<li>(Résumé des étapes non disponible)</li>"
+            }
+
+            mail to: 'ferielyahyaouiii@gmail.com',
+                 subject: "${buildStatus} - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 mimeType: 'text/html',
+                 body: """
+                 <html>
+                     <body style="font-family:Arial, sans-serif; color:#333;">
+                         <h2 style="color:${color};">${title}</h2>
+                         <p><strong> Job :</strong> ${env.JOB_NAME}</p>
+                         <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
+                         <p><strong> Durée :</strong> ${currentBuild.durationString}</p>
+                         <p><strong> Status :</strong> <span style="color:${color};"><b>${buildStatus}</b></span></p>
+                         <p><strong>Lien Jenkins :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                         <hr/>
+                         <h3> Étapes exécutées :</h3>
+                         <ul>
+                             ${stageSummary}
+                         </ul>
+                     </body>
+                 </html>
+                 """
+        }
     }
 }
+
 
 
   
