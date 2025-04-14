@@ -114,61 +114,46 @@ pipeline {
 
 	    
     }
- post {
+post {
     always {
         script {
             def buildStatus = currentBuild.currentResult
-            def isSuccess = buildStatus == 'SUCCESS'
-            def color = isSuccess ? 'green' : 'red'
-            def title = isSuccess ? 'Pipeline terminé avec succès' : 'Échec du Pipeline'
-            def stageSummary = ""
+            def buildColor = buildStatus == 'SUCCESS' ? 'green' : 'red'
+            def title = buildStatus == 'SUCCESS' ? '🎉 Succès du pipeline' : ' Échec du pipeline'
 
-            try {
-                def flowNodes = currentBuild.rawBuild.getExecution().getCurrentHeads()
-                def executedStages = []
-                flowNodes.each { node ->
-                    def parent = node.getEnclosingBlocks()
-                    parent.each { block ->
-                        def stageName = block.getDisplayName()
-                        if (!executedStages.contains(stageName) && stageName != 'Declarative: Checkout SCM') {
-                            executedStages << stageName
-                        }
+            // Changelog (liste des commits s’il y en a)
+            def changes = ""
+            if (currentBuild.changeSets.size() > 0) {
+                for (changeLogSet in currentBuild.changeSets) {
+                    for (entry in changeLogSet.items) {
+                        changes += "<li><b>${entry.author}</b>: ${entry.msg}</li>"
                     }
                 }
-
-                executedStages.eachWithIndex { name, i ->
-                    def bullet = isSuccess ? "🟢" : "🔴"
-                    stageSummary += "<li>${bullet} ${name}</li>"
-                }
-            } catch (err) {
-                stageSummary = "<li>(Résumé des étapes non disponible)</li>"
+            } else {
+                changes = "<li>Aucun changement détecté</li>"
             }
 
+            // Contenu HTML du mail
+            def htmlContent = """
+                <html>
+                <body style="font-family: Arial, sans-serif; color: #333;">
+                    <h2 style="color:${buildColor};">${title}</h2>
+                    <p><strong> Job :</strong> ${env.JOB_NAME}</p>
+                    <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
+                    <p><strong>Durée :</strong> ${currentBuild.durationString}</p>
+                    <p><strong>Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                    <hr/>
+                    <h3>📝 Changelog :</h3>
+                    <ul>${changes}</ul>
+                </body>
+                </html>
+            """
+
+            // Envoi de l'email
             mail to: 'ferielyahyaouiii@gmail.com',
-                 subject: "${buildStatus} - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 subject: "${buildStatus} - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                  mimeType: 'text/html',
-                 body: """
-                 <html>
-                     <body style="font-family:Arial, sans-serif; color:#333;">
-                         <h2 style="color:${color};">${title}</h2>
-                         <p><strong> Job :</strong> ${env.JOB_NAME}</p>
-                         <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
-                         <p><strong> Durée :</strong> ${currentBuild.durationString}</p>
-                         <p><strong> Status :</strong> <span style="color:${color};"><b>${buildStatus}</b></span></p>
-                         <p><strong>Lien Jenkins :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                         <hr/>
-                         <h3> Étapes exécutées :</h3>
-                         <ul>
-                             ${stageSummary}
-                         </ul>
-                     </body>
-                 </html>
-                 """
+                 body: htmlContent
         }
     }
-}
-
-
-
-  
 }
