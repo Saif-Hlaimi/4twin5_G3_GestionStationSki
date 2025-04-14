@@ -106,6 +106,11 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            echo "Pipeline finished successfully"
+        }
+    }
 
   
 }
