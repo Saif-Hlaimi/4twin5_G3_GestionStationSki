@@ -71,7 +71,38 @@ pipeline {
                 }
             }
         }
-        
+
+	    
+        stage('Push to Docker Hub') {
+    steps {
+        script {
+            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+
+                // Extraire nom d'image sans le namespace
+                def imageName = "${DOCKER_IMAGE}".split('/')[1] // Ex: gestion-station-ski
+                def repo = "${DOCKER_IMAGE}".split('/')[0]       // Ex: ferielyahyaoui
+
+                // Vérifier si le tag existe déjà sur DockerHub
+                def exists = sh(
+                    script: """
+                        curl -s -o /dev/null -w "%{http_code}" \
+                        https://hub.docker.com/v2/repositories/${repo}/${imageName}/tags/${DOCKER_TAG}
+                    """,
+                    returnStdout: true
+                ).trim()
+
+                if (exists == '200') {
+                    echo "L'image ${DOCKER_IMAGE}:${DOCKER_TAG} existe déjà sur DockerHub. Pas de push nécessaire." 
+                } else {
+                    echo " Image non trouvée sur DockerHub. Connexion et push en cours..." 
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
+            }
+        }
+    }
+}
+
 
         stage('Deploy avec Docker Compose') {
             steps {
