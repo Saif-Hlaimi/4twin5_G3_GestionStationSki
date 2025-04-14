@@ -127,7 +127,7 @@ pipeline {
                 <p><b>Voir les détails :</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
             """,
             mimeType: 'text/html',
-            to: 'ferielyahaoiii@gmail.com'
+            to: 'ferielyahyaouiii@gmail.com'
         )
     }
 
@@ -143,14 +143,11 @@ pipeline {
                 <p><b>Voir les détails :</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
             """,
             mimeType: 'text/html',
-            to: 'ferielyahaoiii@gmail.com'
+            to: 'ferielyahyaouiii@gmail.com'
         )
     }
 
-    always {
-        echo "📬 Notification par e-mail envoyée selon le statut du build."
-        cleanWs()
-    }
+  
 }
 
 
