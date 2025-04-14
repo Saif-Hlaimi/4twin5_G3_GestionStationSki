@@ -96,16 +96,17 @@ pipeline {
             def grafanaUrl = "http://192.168.1.18:3000"
             def dashboardUrl = "${grafanaUrl}/d/haryan-jenkins/jenkins3a-performance-and-health-overview?orgId=1&from=now-30m&to=now"
 
-            echo "📊 Vérification de l'état de Grafana..."
+            echo " Vérification de l'état de Grafana..."
 
             def status = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${grafanaUrl}", returnStdout: true).trim()
 
-            if (status == '200') {
-                echo "✅ Grafana est accessible : ${grafanaUrl}"
-                echo "🔗 Dashboard Jenkins : ${dashboardUrl}"
-            } else {
-                echo "⚠️ Grafana inaccessible (HTTP ${status})"
-            }
+		           if (status == '200' || status == '302') {
+		    echo " Grafana est accessible : ${grafanaUrl}"
+		    echo " Dashboard Jenkins : ${dashboardUrl}"
+		} else {
+		    echo "Grafana inaccessible (HTTP ${status})"
+		}
+
         }
     }
 }
