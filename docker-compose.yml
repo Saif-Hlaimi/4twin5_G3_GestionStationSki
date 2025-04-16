@@ -29,7 +29,7 @@ services:
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ""
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
       SERVER_SERVLET_CONTEXT_PATH: /api
       SPRING_MVC_FORMAT_DATE: "yyyy-MM-dd"
