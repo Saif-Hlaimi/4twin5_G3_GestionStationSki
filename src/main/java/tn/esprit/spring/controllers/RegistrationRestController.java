@@ -4,13 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import tn.esprit.spring.entities.Instructor;
-import tn.esprit.spring.entities.Registration;
-import tn.esprit.spring.entities.Support;
-import tn.esprit.spring.entities.TypeSubscription;
+import tn.esprit.spring.entities.*;
 import tn.esprit.spring.services.IRegistrationServices;
 
 import java.util.List;
+import java.util.Set;
 
 @Tag(name = "\uD83D\uDDD3️Registration Management")
 @RestController
@@ -18,6 +16,32 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RegistrationRestController {
     private final IRegistrationServices registrationServices;
+
+
+    @Operation(description = "Add Registration ")
+    @PostMapping("/add")
+    public Registration addRegistration(@RequestBody Registration registration){
+        return  registrationServices.addRegistration(registration);
+    }
+
+    @Operation(description = "Retrieve registrations all")
+    @GetMapping("/getall")
+    public List<Registration> retrieveAllRegistration(){
+        return  registrationServices.retrieveAllRegistration();
+    }
+
+    @Operation(description = "Retrieve Subscriptions by id")
+    @GetMapping("/get/{numRegistration}")
+    public Registration retrieveRegistration(@PathVariable Long numRegistration){
+        return registrationServices.retrieveRegistration(numRegistration);
+    }
+    @Operation(description = "delete registrations ")
+    @DeleteMapping("/delete/{numRegistration}")
+    public void removeRegistration(@PathVariable Long numRegistration){
+         registrationServices.removeRegistration(numRegistration);
+    }
+
+
 
     @Operation(description = "Add Registration and Assign to Skier")
     @PutMapping("/addAndAssignToSkier/{numSkieur}")
