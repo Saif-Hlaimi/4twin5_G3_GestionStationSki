@@ -15,6 +15,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RegistrationRestController {
     private final IRegistrationServices registrationServices;
+    @Operation(description = "Add Registration ")
+    @PostMapping("/add")
+    public Registration addRegistration(@RequestBody Registration registration){
+        return  registrationServices.addRegistration(registration);
+    }
+
+    @Operation(description = "Retrieve registrations all")
+    @GetMapping("/getall")
+    public List<Registration> retrieveAllRegistration(){
+        return  registrationServices.retrieveAllRegistration();
+    }
     
     @Operation(description = "Add Registration and Assign to Skier")
     @PutMapping("/addAndAssignToSkier/{numSkieur}")
