@@ -15,25 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RegistrationRestController {
     private final IRegistrationServices registrationServices;
-    @Operation(description = "Add Registration ")
-    @PostMapping("/add")
-    public Registration addRegistration(@RequestBody Registration registration){
-        // NOSONAR
-        return  registrationServices.addRegistration(registration);  // NOSONAR
-    }
-
-    @Operation(description = "Retrieve Subscriptions by id")
-    @GetMapping("/get/{numRegistration}")
-    public Registration retrieveRegistration(@PathVariable Long numRegistration){
-         // NOSONAR
-        return registrationServices.retrieveRegistration(numRegistration); // NOSONAR
-    }
-    @Operation(description = "delete registrations ")
-    @DeleteMapping("/delete/{numRegistration}")
-    public void removeRegistration(@PathVariable Long numRegistration){
-         // NOSONAR
-         registrationServices.removeRegistration(numRegistration);  // NOSONAR
-    }
+   
     
     @Operation(description = "Add Registration and Assign to Skier")
     @PutMapping("/addAndAssignToSkier/{numSkieur}")
