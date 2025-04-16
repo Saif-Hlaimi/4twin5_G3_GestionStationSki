@@ -8,7 +8,6 @@ import tn.esprit.spring.entities.*;
 import tn.esprit.spring.services.IRegistrationServices;
 
 import java.util.List;
-import java.util.Set;
 
 @Tag(name = "\uD83D\uDDD3️Registration Management")
 @RestController
