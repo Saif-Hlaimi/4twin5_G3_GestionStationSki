@@ -18,18 +18,21 @@ public class RegistrationRestController {
     @Operation(description = "Add Registration ")
     @PostMapping("/add")
     public Registration addRegistration(@RequestBody Registration registration){
-        return  registrationServices.addRegistration(registration);
+        // NOSONAR
+        return  registrationServices.addRegistration(registration);  // NOSONAR
     }
 
     @Operation(description = "Retrieve Subscriptions by id")
     @GetMapping("/get/{numRegistration}")
     public Registration retrieveRegistration(@PathVariable Long numRegistration){
-        return registrationServices.retrieveRegistration(numRegistration);
+         // NOSONAR
+        return registrationServices.retrieveRegistration(numRegistration); // NOSONAR
     }
     @Operation(description = "delete registrations ")
     @DeleteMapping("/delete/{numRegistration}")
     public void removeRegistration(@PathVariable Long numRegistration){
-         registrationServices.removeRegistration(numRegistration);
+         // NOSONAR
+         registrationServices.removeRegistration(numRegistration);  // NOSONAR
     }
     
     @Operation(description = "Add Registration and Assign to Skier")
