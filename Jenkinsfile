@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'saifhl888/gestion-station-ski'
         DOCKER_TAG = '1.0.0'
-        EMAIL_RECIPIENT = 'saif.hlaimi@esprit.tn'
+        EMAIL_RECIPIENT = 'hlaimi.saif@esprit.tn'
         JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
         MAVEN_OPTS = "--add-opens java.base/java.lang=ALL-UNNAMED -Djdk.module.illegalAccess=permit"
         M2_HOME = "/usr/share/maven"
@@ -134,8 +134,8 @@ pipeline {
                     """,
                     to: env.EMAIL_RECIPIENT,
                     mimeType: 'text/html',
-                    replyTo: 'saif.hlaimi@esprit.tn',
-                    from: 'saif.hlaimi@esprit.tn'
+                    replyTo: 'hlaimi.saifi@esprit.tn',
+                    from: 'hlaimi.saifi@esprit.tn'
                 )
             }
             junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
