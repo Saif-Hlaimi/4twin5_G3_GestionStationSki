@@ -5,8 +5,8 @@ services:
     image: mysql:5.7
     restart: unless-stopped
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_DATABASE: stationSki
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=stationSki
     ports:
       - 3306:3306
     volumes:
@@ -26,13 +26,13 @@ services:
     ports:
       - 8089:8089
     environment:
-      SPRING_DATASOURCE_URL: "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true"
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create
-      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
-      SERVER_SERVLET_CONTEXT_PATH: /api
-      SPRING_MVC_FORMAT_DATE: "yyyy-MM-dd"
+      SPRING_APPLICATION_JSON: '{
+        "spring.datasource.url" : "jdbc:mysql://mysqldb:3306/stationSki?createDatabaseIfNotExist=true",
+        "spring.datasource.username" : "root",
+        "spring.datasource.password" : "",
+        "spring.jpa.properties.hibernate.dialect" : "org.hibernate.dialect.MySQLDialect",
+        "spring.jpa.hibernate.ddl-auto" : "update"
+      }'
     stdin_open: true
     tty: true
 
