@@ -21,11 +21,6 @@ public class RegistrationRestController {
         return  registrationServices.addRegistration(registration);
     }
 
-    @Operation(description = "Retrieve registrations all")
-    @GetMapping("/getall")
-    public List<Registration> retrieveAllRegistration(){
-        return  registrationServices.retrieveAllRegistration();
-    }
     @Operation(description = "Retrieve Subscriptions by id")
     @GetMapping("/get/{numRegistration}")
     public Registration retrieveRegistration(@PathVariable Long numRegistration){
