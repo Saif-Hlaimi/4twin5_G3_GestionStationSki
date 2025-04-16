@@ -28,7 +28,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=
     ports:
-      - "9000:9000"
+      - "9001:9001"
     depends_on:
       mysql:
         condition: service_healthy
