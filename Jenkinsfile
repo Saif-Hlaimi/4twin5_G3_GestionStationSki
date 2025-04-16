@@ -62,7 +62,7 @@ pipeline {
                     sh '''#!/bin/bash
                         set -e
 
-                        # Stop and remove any containers using ports 3306 and 9001
+                        # Stop and remove any containers using ports 3306 and 8089
                         echo "Checking for containers on port 3306..."
                         CONTAINERS_3306=$(docker ps -q --filter "publish=3306")
                         if [ -n "$CONTAINERS_3306" ]; then
@@ -71,12 +71,12 @@ pipeline {
                             docker rm -f $CONTAINERS_3306 || true
                         fi
 
-                        echo "Checking for containers on port 9001..."
-                        CONTAINERS_9001=$(docker ps -q --filter "publish=9001")
-                        if [ -n "$CONTAINERS_9001" ]; then
-                            echo "Port 9001 in use, stopping containers: $CONTAINERS_9001"
-                            docker stop $CONTAINERS_9001 || true
-                            docker rm -f $CONTAINERS_9001 || true
+                        echo "Checking for containers on port 8089..."
+                        CONTAINERS_8089=$(docker ps -q --filter "publish=8089")
+                        if [ -n "$CONTAINERS_8089" ]; then
+                            echo "Port 8089 in use, stopping containers: $CONTAINERS_8089"
+                            docker stop $CONTAINERS_8089 || true
+                            docker rm -f $CONTAINERS_8089 || true
                         fi
 
                         # Additional cleanup for known container names
@@ -85,7 +85,7 @@ pipeline {
 
                         # Clean up any stopped containers still binding ports
                         docker rm -f $(docker ps -a -q --filter "publish=3306") || true
-                        docker rm -f $(docker ps -a -q --filter "publish=9001") || true
+                        docker rm -f $(docker ps -a -q --filter "publish=8089") || true
 
                         # Clean up and recreate network
                         docker network rm station-ski-net || true
@@ -110,7 +110,7 @@ pipeline {
                         # Run application container
                         docker run -d --name gestion-station-ski-app \
                             --network station-ski-net \
-                            -p 9001:9001 \
+                            -p 8089:8089 \
                             -e SPRING_PROFILES_ACTIVE=docker \
                             -e SPRING_DATASOURCE_URL=jdbc:mysql://station-ski-mysql:3306/stationSki?createDatabaseIfNotExist=true \
                             -e SPRING_DATASOURCE_USERNAME=root \
