@@ -79,7 +79,7 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-            withCredentials([usernamePassword(credentialsId: 'Dockerhub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         def imageName = "${DOCKER_IMAGE}".split('/')[1]
                         def repo = "${DOCKER_IMAGE}".split('/')[0]
 
