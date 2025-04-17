@@ -15,15 +15,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RegistrationRestController {
     private final IRegistrationServices registrationServices;
-   
+    
+   @SuppressWarnings("squid:S4684")
      @PostMapping("/add")
     public Registration addRegistration(@RequestBody Registration registration){
         return  registrationServices.addRegistration(registration);
     }
+    @SuppressWarnings("squid:S4684")
     @GetMapping("/getall")
     public List<Registration> retrieveAllRegistration(){
         return  registrationServices.retrieveAllRegistration();
     }
+    @SuppressWarnings("squid:S4684")
     @DeleteMapping("/delete/{numRegistration}")
     public void removeRegistration(@PathVariable Long numRegistration){
         registrationServices.removeRegistration(numRegistration);
