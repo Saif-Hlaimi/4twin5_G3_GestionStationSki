@@ -16,7 +16,18 @@ import java.util.List;
 public class RegistrationRestController {
     private final IRegistrationServices registrationServices;
    
-    
+     @PostMapping("/add")
+    public Registration addRegistration(@RequestBody Registration registration){
+        return  registrationServices.addRegistration(registration);
+    }
+    @GetMapping("/getall")
+    public List<Registration> retrieveAllRegistration(){
+        return  registrationServices.retrieveAllRegistration();
+    }
+    @DeleteMapping("/delete/{numRegistration}")
+    public void removeRegistration(@PathVariable Long numRegistration){
+        registrationServices.removeRegistration(numRegistration);
+    }
     @Operation(description = "Add Registration and Assign to Skier")
     @PutMapping("/addAndAssignToSkier/{numSkieur}")
     public Registration addAndAssignToSkier(@RequestBody Registration registration,
