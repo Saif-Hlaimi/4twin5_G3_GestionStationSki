@@ -76,11 +76,9 @@ pipeline {
         stage('Push Docker Image to DockerHub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_HUB_USER',
-                        passwordVariable: 'DOCKER_HUB_PWD')]) {
-                        sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
-                        sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                     // Remplacer directement les valeurs de l'utilisateur et mot de passe
+                                sh 'echo "Loura@94440966" | docker login -u elaasboui --password-stdin'
+                                sh 'docker push elaasboui/gestion-station-ski:1.0.0'
                     }
                 }
             }
