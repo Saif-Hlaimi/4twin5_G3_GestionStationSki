@@ -27,6 +27,12 @@ public class RegistrationRestController {
         return  registrationServices.retrieveAllRegistration();
     }
     @SuppressWarnings("squid:S4684")
+    @PutMapping("/update")
+    public Registration updateRegistration(@RequestBody Registration registration) {
+    return registrationServices.updateRegistration(registration);
+    }
+
+    @SuppressWarnings("squid:S4684")
     @DeleteMapping("/delete/{numRegistration}")
     public void removeRegistration(@PathVariable Long numRegistration){
         registrationServices.removeRegistration(numRegistration);
