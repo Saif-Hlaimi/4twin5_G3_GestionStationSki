@@ -6,6 +6,11 @@ pipeline {
         PATH = "$M2_HOME/bin:$JAVA_HOME/bin:$PATH"
         DOCKER_IMAGE = 'elaasboui/gestion-station-ski'  // Docker image name
         DOCKER_TAG = '1.0.0'  // Docker image tag
+
+        // Configurable parameters
+        GRAFANA_URL = "http://192.168.33.10:3000/"
+        DASHBOARD_URL = "http://192.168.33.10:3000/d/haryan-jenkins/jenkins3a-performance-and-health-overview?orgId=1&from=now-30m&to=now&timezone=browser"
+        NOTIFICATION_EMAIL = 'elaa.sboui@esprit.tn'
     }
 
     stages {
@@ -60,6 +65,20 @@ pipeline {
             }
         }
 
+        stage('Grafana Status Check') {
+            steps {
+                script {
+                    def grafanaStatus = checkGrafanaStatus(GRAFANA_URL)
+                    if (grafanaStatus) {
+                        echo "Grafana is accessible: ${GRAFANA_URL}"
+                        echo "Dashboard URL: ${DASHBOARD_URL}"
+                    } else {
+                        echo "Grafana is not accessible at the moment."
+                    }
+                }
+            }
+        }
+
         stage('Docker Build') {
             steps {
                 script {
@@ -90,9 +109,9 @@ pipeline {
                         ).trim()
 
                         if (exists == '200') {
-                            echo "L'image ${DOCKER_IMAGE}:${DOCKER_TAG} existe déjà sur DockerHub. Pas de push nécessaire."
+                            echo "Image ${DOCKER_IMAGE}:${DOCKER_TAG} exists on DockerHub. No need to push."
                         } else {
-                            echo "Image non trouvée sur DockerHub. Connexion et push en cours..."
+                            echo "Image not found on DockerHub. Pushing image..."
                             sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
                             sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
                         }
@@ -166,4 +185,60 @@ pipeline {
             }
         }
     }
+
+    post {
+        success {
+            sendMail('SUCCESS')
+        }
+        failure {
+            sendMail('FAILURE')
+        }
+    }
+}
+
+def checkGrafanaStatus(String url) {
+    echo "Checking Grafana status..."
+    def response = httpRequest(url: url, validResponseCodes: '200,302')
+    return response != null
+}
+
+def sendMail(String status) {
+    def subject = (status == 'SUCCESS') ? "Success - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}" : "Failure - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+    def body = (status == 'SUCCESS') ? generateSuccessMailBody() : generateFailureMailBody()
+
+    mail to: "${params.NOTIFICATION_EMAIL}",
+         subject: subject,
+         mimeType: 'text/html',
+         body: body
+}
+
+def generateSuccessMailBody() {
+    return """
+    <html>
+        <body style="font-family:Arial, sans-serif; color:#333;">
+            <h2 style="color:green;">Pipeline completed successfully</h2>
+            <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+            <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
+            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+            <p><strong>Status:</strong> <span style="color:green;"><b>SUCCESS</b></span></p>
+            <p><strong>Link:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+        </body>
+    </html>
+    """
+}
+
+def generateFailureMailBody() {
+    return """
+    <html>
+        <body style="font-family:Arial, sans-serif; color:#333;">
+            <h2 style="color:red;">Pipeline failed</h2>
+            <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+            <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
+            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+            <p><strong>Status:</strong> <span style="color:red;"><b>FAILURE</b></span></p>
+            <p><strong>Failed Step:</strong> Check Jenkins logs for details</p>
+            <p><strong>Link:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+        </body>
+    </html>
+    """
 }
