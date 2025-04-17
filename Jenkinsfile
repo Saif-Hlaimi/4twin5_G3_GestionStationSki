@@ -4,8 +4,8 @@ pipeline {
         JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
         M2_HOME = "/usr/share/maven"
         PATH = "$M2_HOME/bin:$JAVA_HOME/bin:$PATH"
-        DOCKER_IMAGE = 'elaasboui/gestion-station-ski'  // Nom de l'image Docker
-        DOCKER_TAG = '1.0.0'  // Tag de l'image Docker
+        DOCKER_IMAGE = 'elaasboui/gestion-station-ski'  // Docker image name
+        DOCKER_TAG = '1.0.0'  // Docker image tag
     }
 
     stages {
@@ -63,11 +63,12 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_HUB_USER',
-                        passwordVariable: 'DOCKER_HUB_PWD')]) {
-                        sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
-                        sh 'docker build --network=host -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                    def imageExists = sh(script: "docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG}", returnStdout: true).trim()
+                    if (!imageExists) {
+                        echo "Image not found. Building now..."
+                        sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    } else {
+                        echo "Docker image already exists: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
                 }
             }
@@ -76,10 +77,26 @@ pipeline {
         stage('Push Docker Image to DockerHub') {
             steps {
                 script {
-                     // Remplacer directement les valeurs de l'utilisateur et mot de passe
-                                sh 'echo "Loura@94440966" | docker login -u elaasboui --password-stdin'
-                                sh 'docker push elaasboui/gestion-station-ski:1.0.0'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PWD')]) {
+                        def imageName = "${DOCKER_IMAGE}".split('/')[1] // Ex: gestion-station-ski
+                        def repo = "${DOCKER_IMAGE}".split('/')[0]    // Ex: ferielyahyaoui
 
+                        def exists = sh(
+                            script: """
+                                curl -s -o /dev/null -w "%{http_code}" \
+                                https://hub.docker.com/v2/repositories/${repo}/${imageName}/tags/${DOCKER_TAG}
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        if (exists == '200') {
+                            echo "L'image ${DOCKER_IMAGE}:${DOCKER_TAG} existe déjà sur DockerHub. Pas de push nécessaire."
+                        } else {
+                            echo "Image non trouvée sur DockerHub. Connexion et push en cours..."
+                            sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
+                            sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        }
+                    }
                 }
             }
         }
@@ -90,7 +107,7 @@ pipeline {
                     sh '''#!/bin/bash
                         set -e
 
-                        # Stop and remove any containers using ports 3306 and 8089
+                        # Stop and remove containers using ports 3306 and 8089
                         echo "Checking for containers on port 3306..."
                         CONTAINERS_3306=$(docker ps -q --filter "publish=3306")
                         if [ -n "$CONTAINERS_3306" ]; then
