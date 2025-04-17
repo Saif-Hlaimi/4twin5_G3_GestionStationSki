@@ -209,7 +209,7 @@ pipeline {
                 ]
             )
         }
-                   cleanWs()
+
 
     }
 }
