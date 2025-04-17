@@ -98,7 +98,7 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PWD')]) {
                         def imageName = "${DOCKER_IMAGE}".split('/')[1] // Ex: gestion-station-ski
-                        def repo = "${DOCKER_IMAGE}".split('/')[0]    // Ex: ferielyahyaoui
+                        def repo = "${DOCKER_IMAGE}".split('/')[0]
 
                         def exists = sh(
                             script: """
