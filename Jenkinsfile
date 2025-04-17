@@ -114,7 +114,6 @@ pipeline {
         stage('Déploiement avec Docker Compose') {
             steps {
                 script {
-                    sh 'docker pull $DOCKER_IMAGE:$DOCKER_TAG'
                     sh 'docker-compose down || true'
                     sh 'docker-compose up -d'
                 }
