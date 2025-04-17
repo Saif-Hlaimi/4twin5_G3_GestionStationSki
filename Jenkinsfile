@@ -76,32 +76,51 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
-            steps {
-                script {
-            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        def imageName = "${DOCKER_IMAGE}".split('/')[1]
-                        def repo = "${DOCKER_IMAGE}".split('/')[0]
+     pipeline {
+         agent any
+         environment {
+             // Exemple : à adapter selon vos variables
+             DOCKER_IMAGE = 'monrepo/monimage'
+             DOCKER_TAG   = "${env.BUILD_ID}"
+         }
+         stages {
+             stage('Push to Docker Hub') {
+                 steps {
+                     script {
+                         withCredentials([
+                             usernamePassword(
+                                 credentialsId: 'dockerhub-creds',
+                                 usernameVariable: 'DOCKER_USER',
+                                 passwordVariable: 'DOCKER_PASS'
+                             )
+                         ]) {
+                             // Extraire repo et nom d'image
+                             def parts     = "${DOCKER_IMAGE}".split('/')
+                             def repo      = parts[0]
+                             def imageName = parts[1]
 
-                        def exists = sh(
-                            script: """
-                                curl -s -o /dev/null -w "%{http_code}" \
-                                https://hub.docker.com/v2/repositories/${repo}/${imageName}/tags/${DOCKER_TAG}
-                            """,
-                            returnStdout: true
-                        ).trim()
+                             // Vérifier si le tag existe déjà
+                             def exists = sh(
+                                 script: """
+                                     curl -s -o /dev/null -w "%{http_code}" \
+                                     https://hub.docker.com/v2/repositories/${repo}/${imageName}/tags/${DOCKER_TAG}
+                                 """.stripIndent(),
+                                 returnStdout: true
+                             ).trim()
 
-                        if (exists == '200') {
-                            echo "⚠️ L'image ${DOCKER_IMAGE}:${DOCKER_TAG} existe déjà sur DockerHub. Pas de push nécessaire."
-                        } else {
-                            echo "🔐 Connexion à DockerHub et push en cours..."
-                            sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                            sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                        }
-                    }
-                }
-            }
-        }
+                             if (exists == '200') {
+                                 echo "L'image ${DOCKER_IMAGE}:${DOCKER_TAG} existe déjà. Pas de push nécessaire."
+                             } else {
+                                 echo "Image non trouvée. Connexion et push en cours..."
+                                 sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                                 sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                             }
+                         } // fin withCredentials
+                     }     // fin script
+                 }         // fin steps
+             }             // fin stage
+         }                 // fin stages
+     }                     // fin pipeline
 
         stage('Déploiement avec Docker Compose') {
             steps {
