@@ -79,7 +79,7 @@ pipeline {
                      // Remplacer directement les valeurs de l'utilisateur et mot de passe
                                 sh 'echo "Loura@94440966" | docker login -u elaasboui --password-stdin'
                                 sh 'docker push elaasboui/gestion-station-ski:1.0.0'
-                    }
+
                 }
             }
         }
