@@ -203,42 +203,18 @@ def checkGrafanaStatus(String url) {
 }
 
 def sendMail(String status) {
-    def subject = (status == 'SUCCESS') ? "Success - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}" : "Failure - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-    def body = (status == 'SUCCESS') ? generateSuccessMailBody() : generateFailureMailBody()
-
-    mail to: "${env.NOTIFICATION_EMAIL}",
-         subject: subject,
-         mimeType: 'text/html',
-         body: body
-}
-
-def generateSuccessMailBody() {
-    return """
+    def subject = status == 'SUCCESS' ? "Succès - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}" : "Échec - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+    def body = """
     <html>
         <body style="font-family:Arial, sans-serif; color:#333;">
-            <h2 style="color:green;">Pipeline completed successfully</h2>
-            <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-            <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
-            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            <p><strong>Status:</strong> <span style="color:green;"><b>SUCCESS</b></span></p>
-            <p><strong>Link:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+            <h2 style="color:${status == 'SUCCESS' ? 'green' : 'red'};">${status == 'SUCCESS' ? 'Pipeline terminé avec succès' : 'Le pipeline a échoué'}</h2>
+            <p><strong> Job :</strong> ${env.JOB_NAME}</p>
+            <p><strong> Build # :</strong> ${env.BUILD_NUMBER}</p>
+            <p><strong> Durée :</strong> ${currentBuild.durationString}</p>
+            <p><strong> Status :</strong> <span style="color:${status == 'SUCCESS' ? 'green' : 'red'};"><b>${status}</b></span></p>
+            <p><strong> Lien :</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
         </body>
     </html>
     """
-}
-
-def generateFailureMailBody() {
-    return """
-    <html>
-        <body style="font-family:Arial, sans-serif; color:#333;">
-            <h2 style="color:red;">Pipeline failed</h2>
-            <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-            <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
-            <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-            <p><strong>Status:</strong> <span style="color:red;"><b>FAILURE</b></span></p>
-            <p><strong>Failed Step:</strong> Check Jenkins logs for details</p>
-            <p><strong>Link:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-        </body>
-    </html>
-    """
+    mail to: NOTIFICATION_EMAIL, subject: subject, mimeType: 'text/html', body: body
 }
