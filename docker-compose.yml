@@ -21,7 +21,7 @@ services:
     depends_on:
       mysqldb:
         condition: service_healthy
-    image: ferielyahyaoui/ferielyahyaoui-4twin5-g3-gestion-station-ski 
+    image: ferielyahyaoui/ferielyahyaoui-4twin5-g3-gestion-station-ski:1.0.0
     restart: on-failure
     ports:
       - 8089:8089
