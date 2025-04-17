@@ -1,18 +1,17 @@
 pipeline {
     agent any
-
     environment {
         JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
         M2_HOME = "/usr/share/maven"
-        PATH = "$M2_HOME/bin:$PATH"
-        DOCKER_IMAGE = 'elaasboui/gestion-station-ski'
-        DOCKER_TAG = '1.0.0'
+        PATH = "$M2_HOME/bin:$JAVA_HOME/bin:$PATH"
+        DOCKER_IMAGE = 'elaasboui/gestion-station-ski'  // Nom de l'image Docker
+        DOCKER_TAG = '1.0.0'  // Tag de l'image Docker
     }
 
     stages {
         stage('Hello Test') {
             steps {
-                echo '👋 Hello Elaa ! Pipeline lancé...'
+                echo 'hello elaa'
             }
         }
 
@@ -30,7 +29,7 @@ pipeline {
                     try {
                         sh 'mvn clean compile'
                     } catch (Exception e) {
-                        error "❌ Maven clean compile failed: ${e.getMessage()}"
+                        error "Maven clean compile failed: ${e.getMessage()}"
                     }
                 }
             }
@@ -42,7 +41,7 @@ pipeline {
                     try {
                         sh 'mvn -Dtest=SubscriptionServicesImplTest clean test'
                     } catch (Exception e) {
-                        error "❌ Test execution failed: ${e.getMessage()}"
+                        error "Test execution failed: ${e.getMessage()}"
                     }
                 }
             }
@@ -56,80 +55,101 @@ pipeline {
                             sh 'mvn sonar:sonar'
                         }
                     } catch (Exception e) {
-                        error "❌ SonarQube analysis failed: ${e.getMessage()}"
+                        error "SonarQube analysis failed: ${e.getMessage()}"
                     }
                 }
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Docker Build') {
             steps {
                 script {
-                    def imageExists = sh(script: "docker images -q ${DOCKER_IMAGE}:${DOCKER_TAG}", returnStdout: true).trim()
-                    if (!imageExists) {
-                        echo "🛠️ Image introuvable. Construction en cours..."
-                        sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                    } else {
-                        echo "✅ Image déjà existante : ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_HUB_USER',
+                        passwordVariable: 'DOCKER_HUB_PWD')]) {
+                        sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
+                        sh 'docker build --network=host -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
                     }
                 }
             }
         }
 
-       stage('Push to Docker Hub') {
-           steps {
-               script {
-                   withCredentials([
-                       usernamePassword(
-                           credentialsId: 'dockerhub-creds',
-                           usernameVariable: 'DOCKER_USER',
-                           passwordVariable: 'DOCKER_PASS'
-                       )
-                   ]) {
-                       // Extraire nom d'image et repo
-                       def parts     = "${DOCKER_IMAGE}".split('/')
-                       def repo      = parts[0]
-                       def imageName = parts[1]
-
-                       // Vérifier si le tag existe déjà sur DockerHub
-                       def exists = sh(
-                           script: """
-                               curl -s -o /dev/null -w "%{http_code}" \
-                               https://hub.docker.com/v2/repositories/${repo}/${imageName}/tags/${DOCKER_TAG}
-                           """.stripIndent(),
-                           returnStdout: true
-                       ).trim()
-
-                       if (exists == '200') {
-                           echo "L'image ${DOCKER_IMAGE}:${DOCKER_TAG} existe déjà sur DockerHub. Pas de push nécessaire."
-                       } else {
-                           echo "Image non trouvée sur DockerHub. Connexion et push en cours..."
-                           sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
-                           sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                       }
-                   }
-               }
-           }
-       }
-        stage('Déploiement avec Docker Compose') {
+        stage('Push Docker Image to DockerHub') {
             steps {
                 script {
-                    sh 'docker-compose down || true'
-                    sh 'docker-compose up -d'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_HUB_USER',
+                        passwordVariable: 'DOCKER_HUB_PWD')]) {
+                        sh 'echo $DOCKER_HUB_PWD | docker login -u $DOCKER_HUB_USER --password-stdin'
+                        sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                    }
                 }
             }
         }
 
-        stage('Vérification des conteneurs') {
+        stage('Deploy') {
             steps {
-                sh 'docker ps'
-            }
-        }
-    }
+                script {
+                    sh '''#!/bin/bash
+                        set -e
 
-    post {
-        always {
-            echo '✅ Pipeline terminé avec succès ou avec erreurs.'
+                        # Stop and remove any containers using ports 3306 and 8089
+                        echo "Checking for containers on port 3306..."
+                        CONTAINERS_3306=$(docker ps -q --filter "publish=3306")
+                        if [ -n "$CONTAINERS_3306" ]; then
+                            echo "Port 3306 in use, stopping containers: $CONTAINERS_3306"
+                            docker stop $CONTAINERS_3306 || true
+                            docker rm -f $CONTAINERS_3306 || true
+                        fi
+
+                        echo "Checking for containers on port 8089..."
+                        CONTAINERS_8089=$(docker ps -q --filter "publish=8089")
+                        if [ -n "$CONTAINERS_8089" ]; then
+                            echo "Port 8089 in use, stopping containers: $CONTAINERS_8089"
+                            docker stop $CONTAINERS_8089 || true
+                            docker rm -f $CONTAINERS_8089 || true
+                        fi
+
+                        # Clean up known containers by name
+                        docker stop station-ski-mysql gestion-station-ski-app || true
+                        docker rm -f station-ski-mysql gestion-station-ski-app || true
+
+                        # Clean any stopped containers
+                        docker rm -f $(docker ps -a -q --filter "publish=3306") || true
+                        docker rm -f $(docker ps -a -q --filter "publish=8089") || true
+
+                        # Clean and recreate Docker network
+                        docker network rm station-ski-net || true
+                        docker network create station-ski-net || true
+
+                        # Run MySQL container
+                        docker run -d --name station-ski-mysql \
+                            --network station-ski-net \
+                            -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
+                            -e MYSQL_DATABASE=stationSki \
+                            -p 3306:3306 \
+                            -v mysql_data:/var/lib/mysql \
+                            --health-cmd="mysqladmin ping -h localhost" \
+                            --health-interval=10s \
+                            --health-timeout=5s \
+                            --health-retries=5 \
+                            mysql:5.7
+
+                        # Wait for MySQL to be healthy
+                        timeout 180s bash -c 'until docker inspect station-ski-mysql --format "{{.State.Health.Status}}" | grep "healthy"; do sleep 5; echo "Waiting for MySQL..."; done'
+
+                        # Run application container
+                        docker run -d --name gestion-station-ski-app \
+                            --network station-ski-net \
+                            -p 8089:8089 \
+                            -e SPRING_PROFILES_ACTIVE=docker \
+                            -e SPRING_DATASOURCE_URL=jdbc:mysql://station-ski-mysql:3306/stationSki?createDatabaseIfNotExist=true \
+                            -e SPRING_DATASOURCE_USERNAME=root \
+                            -e SPRING_DATASOURCE_PASSWORD= \
+                            ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    '''
+                }
+            }
         }
     }
 }
