@@ -5,7 +5,7 @@ pipeline {
         JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64/"
         M2_HOME = "/usr/share/maven"
         PATH = "$M2_HOME/bin:$PATH"
-        DOCKER_IMAGE = 'ferielyahyaoui/gestion-station-ski'
+        DOCKER_IMAGE = 'ferielyahyaoui/feryalyahyaoui-4twin5-g3-gestion-station-ski'
         DOCKER_TAG = '1.0.0'
     }
 
