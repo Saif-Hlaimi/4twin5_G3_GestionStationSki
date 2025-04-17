@@ -19,7 +19,7 @@ pipeline {
             steps {
                 git branch: 'Elaasboui-4Twin5-G3',
                     url: 'https://github.com/Saif-Hlaimi/4twin5_G3_GestionStationSki.git',
-                    credentialsId: 'jenkins-key'
+                      credentialsId: 'jenkins-key'
             }
         }
 
