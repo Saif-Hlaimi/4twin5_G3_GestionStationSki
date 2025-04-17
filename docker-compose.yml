@@ -37,6 +37,9 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SERVER_SERVLET_CONTEXT_PATH: /api
       SPRING_MVC_FORMAT_DATE: "yyyy-MM-dd"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,prometheus,metrics"
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW-DETAILS: "always"
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
     networks:
       - timesheet-net
 
