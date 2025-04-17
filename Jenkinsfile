@@ -10,7 +10,7 @@ pipeline {
         // Configurable parameters
         GRAFANA_URL = "http://192.168.33.10:3000/"
         DASHBOARD_URL = "http://192.168.33.10:3000/d/haryan-jenkins/jenkins3a-performance-and-health-overview?orgId=1&from=now-30m&to=now&timezone=browser"
-        NOTIFICATION_EMAIL = 'elaa.sboui@esprit.tn'
+        NOTIFICATION_EMAIL = 'elaa.sboui@esprit.tn'  // Email recipient
     }
 
     stages {
@@ -206,7 +206,7 @@ def sendMail(String status) {
     def subject = (status == 'SUCCESS') ? "Success - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}" : "Failure - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     def body = (status == 'SUCCESS') ? generateSuccessMailBody() : generateFailureMailBody()
 
-    mail to: "${params.NOTIFICATION_EMAIL}",
+    mail to: "${env.NOTIFICATION_EMAIL}",
          subject: subject,
          mimeType: 'text/html',
          body: body
