@@ -186,14 +186,14 @@ pipeline {
         }
     }
 
-    post {
-        success {
-            sendMail('SUCCESS')
-        }
-        failure {
-            sendMail('FAILURE')
-        }
-    }
+   post {
+       success {
+           echo 'Build SUCCESS'
+       }
+       failure {
+           echo 'Build FAILURE'
+       }
+   }
 }
 
 def checkGrafanaStatus(String url) {
