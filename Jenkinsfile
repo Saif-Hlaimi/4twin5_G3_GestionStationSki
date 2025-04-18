@@ -79,8 +79,8 @@ pipeline {
             withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
 
                 // Extraire nom d'image sans le namespace
-                def imageName = "${DOCKER_IMAGE}".split('/')[1] // Ex: gestion-station-ski
-                def repo = "${DOCKER_IMAGE}".split('/')[0]       // Ex: ferielyahyaoui
+                def imageName = "${DOCKER_IMAGE}".split('/')[1] 
+                def repo = "${DOCKER_IMAGE}".split('/')[0]      
 
                 // Vérifier si le tag existe déjà sur DockerHub
                 def exists = sh(
