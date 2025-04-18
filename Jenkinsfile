@@ -36,14 +36,14 @@ pipeline {
                 sh 'mvn -Dtest=RegistrationServicesImplTest clean test'
             }
         }
-        /*	   
+           
          stage('Nexus') {
 			steps {
 				sh 'mvn clean deploy -Dmaven.test.skip=true'            }
         }
-*/
 
-        stage('Sonar Analysis') {
+
+       /* stage('Sonar Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
                     withSonarQubeEnv('sq1') {
@@ -56,7 +56,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Build Docker Image') {
             steps {
