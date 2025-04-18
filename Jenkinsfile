@@ -188,10 +188,10 @@ pipeline {
 
     post {
         success {
-            // sendMail('SUCCESS') // Commented out the email sending function
+            sendMail('SUCCESS')
         }
         failure {
-            // sendMail('FAILURE') // Commented out the email sending function
+            sendMail('FAILURE')
         }
     }
 }
@@ -200,54 +200,4 @@ def checkGrafanaStatus(String url) {
     echo "Checking Grafana status..."
     def response = httpRequest(url: url, validResponseCodes: '200,302')
     return response != null
-}
-
-def sendMail(String status) {
-    // def subject = (status == 'SUCCESS') ? "Success - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}" : "Failure - Build ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-    // def body = (status == 'SUCCESS') ? generateSuccessMailBody() : generateFailureMailBody()
-
-    // withCredentials([usernamePassword(credentialsId: 'gmail-credentials', usernameVariable: 'MAIL_USERNAME', passwordVariable: 'MAIL_PASSWORD')]) {
-    //     mail to: "${env.NOTIFICATION_EMAIL}",
-    //          subject: subject,
-    //          mimeType: 'text/html',
-    //          body: body,
-    //          from: "${env.MAIL_USERNAME}",
-    //          smtpHost: 'smtp.gmail.com',
-    //          smtpPort: 587,
-    //          smtpAuth: true,
-    //          smtpTls: true,
-    //          smtpUser: "${env.MAIL_USERNAME}",
-    //          smtpPassword: "${env.MAIL_PASSWORD}"
-    // }
-}
-
-def generateSuccessMailBody() {
-    // return """
-    // <html>
-    //         <h2 style="color:green;">Pipeline completed successfully</h2>
-    //     <body style="font-family:Arial, sans-serif; color:#333;">
-    //         <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-    //         <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
-    //         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-    //         <p><strong>Status:</strong> <span style="color:green;"><b>SUCCESS</b></span></p>
-    //         <p><strong>Link:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-    //     </body>
-    // </html>
-    // """
-}
-
-def generateFailureMailBody() {
-    // return """
-    // <html>
-    //     <body style="font-family:Arial, sans-serif; color:#333;">
-    //         <h2 style="color:red;">Pipeline failed</h2>
-    //         <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-    //         <p><strong>Build #:</strong> ${env.BUILD_NUMBER}</p>
-    //         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-    //         <p><strong>Status:</strong> <span style="color:red;"><b>FAILURE</b></span></p>
-    //         <p><strong>Failed Step:</strong> Check Jenkins logs for details</p>
-    //         <p><strong>Link:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-    //     </body>
-    // </html>
-    // """
 }
